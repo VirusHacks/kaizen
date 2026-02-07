@@ -29,6 +29,7 @@ model User {
   DiscordWebhook        DiscordWebhook[]
   Notion                Notion[]
   Slack                 Slack[]
+  GitHub                GitHub[]
   connections           Connections[]
   workflows             Workflows[]
   projects              Project[]
@@ -94,6 +95,15 @@ model Notion {
   connections   Connections[]
 }
 
+model GitHub {
+  id          String        @id @default(uuid())
+  accessToken String
+  username    String
+  User        User          @relation(fields: [userId], references: [clerkId])
+  userId      String
+  connections Connections[]
+}
+
 model Connections {
   id               String          @id @default(uuid())
   type             String          @unique
@@ -105,6 +115,8 @@ model Connections {
   userId           String?
   Slack            Slack?          @relation(fields: [slackId], references: [id])
   slackId          String?
+  GitHub           GitHub?         @relation(fields: [githubId], references: [id])
+  githubId         String?
 }
 
 model Workflows {

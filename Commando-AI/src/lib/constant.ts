@@ -222,4 +222,11 @@ export const CONNECTIONS: Connection[] = [
     accessTokenKey: 'slackAccessToken',
     slackSpecial: true,
   },
+  {
+    title: 'GitHub',
+    description: 'Connect your GitHub account to access repositories, issues, and pull requests',
+    image: '/icons/github.svg',
+    connectionKey: 'githubNode',
+    accessTokenKey: 'accessToken',
+  },
 ]

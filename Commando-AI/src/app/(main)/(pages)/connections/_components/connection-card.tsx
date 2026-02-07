@@ -74,6 +74,10 @@ const ConnectionCard = ({
       case 'Google Calendar':
       case 'Gmail':
         return '/api/auth/google'
+      case 'GitHub':
+        const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'your_github_client_id_here'
+        const redirectUri = encodeURIComponent(process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI || 'https://localhost:3000/api/auth/callback/github')
+        return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=repo,user,read:org`
       default:
         return '#'
     }

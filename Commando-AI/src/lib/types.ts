@@ -67,7 +67,7 @@ export const SprintFormSchema = z.object({
 
 export const UpdateSprintSchema = SprintFormSchema.partial()
 
-export type ConnectionTypes = 'Google Drive' | 'Google Calendar' | 'Gmail' | 'Notion' | 'Slack' | 'Discord'
+export type ConnectionTypes = 'Google Drive' | 'Google Calendar' | 'Gmail' | 'Notion' | 'Slack' | 'Discord' | 'GitHub'
 
 export type Connection = {
   title: ConnectionTypes
