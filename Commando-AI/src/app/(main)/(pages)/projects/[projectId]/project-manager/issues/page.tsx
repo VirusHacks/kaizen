@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import IssueButton from './_components/issue-button'
 import IssuesList from './_components'
-import { getProjectById } from '../../_actions/project-actions'
+import { getProjectById } from '../../../_actions/project-actions'
 import { notFound } from 'next/navigation'
 
 type Props = {

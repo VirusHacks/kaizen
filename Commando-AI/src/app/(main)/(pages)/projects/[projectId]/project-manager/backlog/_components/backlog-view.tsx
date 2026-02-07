@@ -1,5 +1,5 @@
 import React from 'react'
-import { getBacklogIssues, getProjectSprints } from '../../sprints/_actions/sprint-actions'
+import { getBacklogIssues, getProjectSprints } from '../../../sprints/_actions/sprint-actions'
 import { Layers, ListTodo } from 'lucide-react'
 import BacklogClient from './backlog-client'
 

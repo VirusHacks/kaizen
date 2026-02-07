@@ -34,7 +34,7 @@ import {
 import { CalendarIcon, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format, addDays, addWeeks } from 'date-fns'
-import { createSprint, updateSprint } from '../../sprints/_actions/sprint-actions'
+import { createSprint, updateSprint } from '../../../sprints/_actions/sprint-actions'
 import { toast } from 'sonner'
 
 type SprintFormValues = z.infer<typeof SprintFormSchema>

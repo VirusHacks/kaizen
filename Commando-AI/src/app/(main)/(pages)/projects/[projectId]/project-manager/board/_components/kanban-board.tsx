@@ -1,6 +1,6 @@
 import React from 'react'
 import { getProjectIssues } from '../../issues/_actions/issue-actions'
-import { getProjectWorkflow } from '../../settings/workflow/_actions/workflow-actions'
+import { getProjectWorkflow } from '../../../settings/workflow/_actions/workflow-actions'
 import { LayoutGrid } from 'lucide-react'
 import KanbanBoardClient from './kanban-board-client'
 
