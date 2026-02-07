@@ -397,3 +397,41 @@ model WorkflowTransition {
   @@index([fromStatusId])
   @@index([toStatusId])
 }
+
+// ==========================================
+// DASHBOARD ANALYTICS
+// ==========================================
+
+model DashboardAnalytics {
+  id        String   @id @default(uuid())
+  userId    Int      @unique
+  
+  // Analytics data stored as JSON
+  monthlySales     Json?
+  aovTrend         Json?
+  topCountries     Json?
+  topProducts      Json?
+  topCustomers     Json?
+  rfmDistribution  Json?
+  revenueByDay     Json?
+  revenueByHour    Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ForecastAnalytics {
+  id        String   @id @default(uuid())
+  userId    Int      @unique
+  
+  periods   Int      @default(6)
+  
+  // Forecast data stored as JSON
+  revenueForecast Json?
+  aovForecast     Json?
+  ordersForecast  Json?
+  
+  lastCalculated DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
