@@ -100,7 +100,7 @@ const ProjectCard = ({ id, name, projectKey, description, isArchived, createdAt 
           </div>
           <div>
             <div className="flex items-center gap-2">
-          button<CardTitle className="text-lg">{name}</CardTitle>
+              <CardTitle className="text-lg">{name}</CardTitle>
               <Badge variant="secondary" className="font-mono text-xs">
                 {projectKey}
               </Badge>
@@ -114,7 +114,7 @@ const ProjectCard = ({ id, name, projectKey, description, isArchived, createdAt 
               {description || 'No description provided'}
             </CardDescription>
           </div>
-        </Link>
+        </button>
       </CardHeader>
       <div className="flex items-center gap-2 p-4">
         <DropdownMenu>

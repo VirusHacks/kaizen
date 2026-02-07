@@ -8,9 +8,11 @@ import { useModal } from '@/providers/modal-provider'
 import { Plus } from 'lucide-react'
 import React from 'react'
 
-type Props = {}
+type Props = {
+  isGitHubConnected?: boolean
+}
 
-const ProjectButton = (props: Props) => {
+const ProjectButton = ({ isGitHubConnected = false }: Props) => {
   const { setOpen } = useModal()
   const { credits } = useBilling()
 
@@ -18,9 +20,9 @@ const ProjectButton = (props: Props) => {
     setOpen(
       <CustomModal
         title="Create a New Project"
-        subheading="Projects help you organize your workflows and tasks."
+        subheading="Set up your project details, tech stack, and GitHub integration."
       >
-        <ProjectForm />
+        <ProjectForm isGitHubConnected={isGitHubConnected} />
       </CustomModal>
     )
   }
