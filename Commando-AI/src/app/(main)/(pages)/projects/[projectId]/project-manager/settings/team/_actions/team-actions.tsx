@@ -3,7 +3,7 @@
 import { db } from '@/lib/db'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
-import { ProjectRole } from '@prisma/client'
+import { ProjectRole, DepartmentRole } from '@prisma/client'
 
 // ==========================================
 // HELPERS
@@ -111,21 +111,27 @@ export const getProjectMembers = async (projectId: string) => {
     })
 
     // Format response with owner included
+    // Find owner's ProjectMember record to get their departmentRole
+    const ownerMember = members.find((m) => m.userId === project.ownerId)
     const formattedMembers = [
       {
         id: 'owner',
         userId: project.owner.clerkId,
         role: 'OWNER' as const,
+        departmentRole: ownerMember?.departmentRole || 'PROJECT_MANAGER' as DepartmentRole,
         joinedAt: project.createdAt,
         user: project.owner,
       },
-      ...members.map((m) => ({
-        id: m.id,
-        userId: m.userId,
-        role: m.role,
-        joinedAt: m.joinedAt,
-        user: m.user,
-      })),
+      ...members
+        .filter((m) => m.userId !== project.ownerId) // Exclude owner from regular members list
+        .map((m) => ({
+          id: m.id,
+          userId: m.userId,
+          role: m.role,
+          departmentRole: m.departmentRole,
+          joinedAt: m.joinedAt,
+          user: m.user,
+        })),
     ]
 
     return {
@@ -149,7 +155,8 @@ export const getProjectMembers = async (projectId: string) => {
 export const inviteProjectMember = async (
   projectId: string,
   email: string,
-  role: ProjectRole = 'MEMBER'
+  role: ProjectRole = 'MEMBER',
+  departmentRole?: DepartmentRole
 ) => {
   try {
     const userId = await getCurrentUserId()
@@ -202,6 +209,7 @@ export const inviteProjectMember = async (
         projectId,
         userId: invitedUser.clerkId,
         role,
+        ...(departmentRole && { departmentRole }),
       },
       include: {
         user: {
@@ -276,6 +284,59 @@ export const updateMemberRole = async (
   } catch (error) {
     console.error('[UPDATE_MEMBER_ROLE]', error)
     return { error: 'Failed to update role', data: null }
+  }
+}
+
+// ==========================================
+// UPDATE MEMBER DEPARTMENT ROLE
+// ==========================================
+
+export const updateMemberDepartmentRole = async (
+  projectId: string,
+  memberId: string,
+  newDepartmentRole: DepartmentRole
+) => {
+  try {
+    const userId = await getCurrentUserId()
+    if (!userId) {
+      return { error: 'User not authenticated', data: null }
+    }
+
+    // Owner or Admin can change department roles
+    const currentUserRole = await getUserProjectRole(projectId, userId)
+    if (!canManageMembers(currentUserRole)) {
+      return { error: 'You do not have permission to change department roles', data: null }
+    }
+
+    // Find the member
+    const member = await db.projectMember.findUnique({
+      where: { id: memberId },
+    })
+
+    if (!member || member.projectId !== projectId) {
+      return { error: 'Member not found', data: null }
+    }
+
+    const updatedMember = await db.projectMember.update({
+      where: { id: memberId },
+      data: { departmentRole: newDepartmentRole },
+      include: {
+        user: {
+          select: {
+            clerkId: true,
+            name: true,
+            email: true,
+            profileImage: true,
+          },
+        },
+      },
+    })
+
+    revalidatePath(`/projects/${projectId}/settings/team`)
+    return { data: updatedMember, error: null, message: 'Department role updated successfully' }
+  } catch (error) {
+    console.error('[UPDATE_MEMBER_DEPARTMENT_ROLE]', error)
+    return { error: 'Failed to update department role', data: null }
   }
 }
 

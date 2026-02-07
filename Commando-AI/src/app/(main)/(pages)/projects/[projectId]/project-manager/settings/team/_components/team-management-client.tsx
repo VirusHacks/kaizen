@@ -54,12 +54,19 @@ import {
   Trash2,
   Loader2,
   Mail,
+  Code2,
+  Bug,
+  DollarSign,
+  TrendingUp,
+  Briefcase,
+  FolderKanban,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ProjectRole } from '@prisma/client'
+import { ProjectRole, DepartmentRole } from '@prisma/client'
 import {
   inviteProjectMember,
   updateMemberRole,
+  updateMemberDepartmentRole,
   removeProjectMember,
 } from '../_actions/team-actions'
 
@@ -68,6 +75,7 @@ type TeamMember = {
   id: string
   userId: string
   role: ProjectRole | 'OWNER'
+  departmentRole?: DepartmentRole | null
   joinedAt: Date
   user: {
     clerkId: string
@@ -93,6 +101,16 @@ const ROLE_CONFIG: Record<ProjectRole | 'OWNER', { label: string; icon: React.El
   VIEWER: { label: 'Viewer', icon: Eye, color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
 }
 
+// Department role configuration
+const DEPT_ROLE_CONFIG: Record<DepartmentRole, { label: string; icon: React.ElementType; color: string }> = {
+  DEVELOPER: { label: 'Developer', icon: Code2, color: 'bg-purple-500/10 text-purple-500 border-purple-500/20' },
+  QA_TESTER: { label: 'QA Tester', icon: Bug, color: 'bg-orange-500/10 text-orange-500 border-orange-500/20' },
+  FINANCE: { label: 'Finance', icon: DollarSign, color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+  SALES: { label: 'Sales', icon: TrendingUp, color: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20' },
+  EXECUTIVE: { label: 'Executive', icon: Briefcase, color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  PROJECT_MANAGER: { label: 'Project Manager', icon: FolderKanban, color: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' },
+}
+
 const TeamManagementClient = ({
   projectId,
   projectName,
@@ -105,6 +123,7 @@ const TeamManagementClient = ({
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<ProjectRole>('MEMBER')
+  const [inviteDeptRole, setInviteDeptRole] = useState<DepartmentRole | ''>('')
 
   const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN'
   const canChangeRoles = currentUserRole === 'OWNER'
@@ -116,7 +135,12 @@ const TeamManagementClient = ({
     }
 
     startTransition(async () => {
-      const result = await inviteProjectMember(projectId, inviteEmail.trim(), inviteRole)
+      const result = await inviteProjectMember(
+        projectId,
+        inviteEmail.trim(),
+        inviteRole,
+        inviteDeptRole || undefined
+      )
 
       if (result.error) {
         toast.error(result.error)
@@ -125,6 +149,7 @@ const TeamManagementClient = ({
         setIsInviteOpen(false)
         setInviteEmail('')
         setInviteRole('MEMBER')
+        setInviteDeptRole('')
         router.refresh()
       }
     })
@@ -133,6 +158,19 @@ const TeamManagementClient = ({
   const handleRoleChange = (memberId: string, newRole: ProjectRole) => {
     startTransition(async () => {
       const result = await updateMemberRole(projectId, memberId, newRole)
+
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(result.message)
+        router.refresh()
+      }
+    })
+  }
+
+  const handleDeptRoleChange = (memberId: string, newDeptRole: DepartmentRole) => {
+    startTransition(async () => {
+      const result = await updateMemberDepartmentRole(projectId, memberId, newDeptRole)
 
       if (result.error) {
         toast.error(result.error)
@@ -158,6 +196,22 @@ const TeamManagementClient = ({
 
   const getRoleBadge = (role: ProjectRole | 'OWNER') => {
     const config = ROLE_CONFIG[role]
+    const Icon = config.icon
+    return (
+      <Badge variant="outline" className={cn('gap-1', config.color)}>
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    )
+  }
+
+  const getDeptRoleBadge = (deptRole: DepartmentRole | null | undefined) => {
+    if (!deptRole) {
+      return (
+        <span className="text-xs text-muted-foreground italic">Not assigned</span>
+      )
+    }
+    const config = DEPT_ROLE_CONFIG[deptRole]
     const Icon = config.icon
     return (
       <Badge variant="outline" className={cn('gap-1', config.color)}>
@@ -248,6 +302,58 @@ const TeamManagementClient = ({
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="deptRole">Department</Label>
+                      <Select
+                        value={inviteDeptRole}
+                        onValueChange={(value) => setInviteDeptRole(value as DepartmentRole)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select department..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DEVELOPER">
+                            <div className="flex items-center gap-2">
+                              <Code2 className="h-4 w-4 text-purple-500" />
+                              Developer
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="QA_TESTER">
+                            <div className="flex items-center gap-2">
+                              <Bug className="h-4 w-4 text-orange-500" />
+                              QA Tester
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="FINANCE">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="h-4 w-4 text-emerald-500" />
+                              Finance
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="SALES">
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4 text-cyan-500" />
+                              Sales
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="EXECUTIVE">
+                            <div className="flex items-center gap-2">
+                              <Briefcase className="h-4 w-4 text-amber-500" />
+                              Executive
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="PROJECT_MANAGER">
+                            <div className="flex items-center gap-2">
+                              <FolderKanban className="h-4 w-4 text-indigo-500" />
+                              Project Manager
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Determines which dashboard view the member sees.
+                      </p>
+                    </div>
                   </div>
                   <DialogFooter>
                     <Button
@@ -277,6 +383,7 @@ const TeamManagementClient = ({
               <TableRow>
                 <TableHead>Member</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Department</TableHead>
                 <TableHead>Joined</TableHead>
                 {canManageMembers && <TableHead className="w-[100px]">Actions</TableHead>}
               </TableRow>
@@ -349,6 +456,61 @@ const TeamManagementClient = ({
                         </Select>
                       ) : (
                         getRoleBadge(member.role)
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {canManageMembers && !isOwner ? (
+                        <Select
+                          value={member.departmentRole || ''}
+                          onValueChange={(value) =>
+                            handleDeptRoleChange(member.id, value as DepartmentRole)
+                          }
+                          disabled={isPending}
+                        >
+                          <SelectTrigger className="w-[170px]">
+                            <SelectValue placeholder="Assign dept..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="DEVELOPER">
+                              <div className="flex items-center gap-2">
+                                <Code2 className="h-3 w-3 text-purple-500" />
+                                Developer
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="QA_TESTER">
+                              <div className="flex items-center gap-2">
+                                <Bug className="h-3 w-3 text-orange-500" />
+                                QA Tester
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="FINANCE">
+                              <div className="flex items-center gap-2">
+                                <DollarSign className="h-3 w-3 text-emerald-500" />
+                                Finance
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="SALES">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="h-3 w-3 text-cyan-500" />
+                                Sales
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="EXECUTIVE">
+                              <div className="flex items-center gap-2">
+                                <Briefcase className="h-3 w-3 text-amber-500" />
+                                Executive
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="PROJECT_MANAGER">
+                              <div className="flex items-center gap-2">
+                                <FolderKanban className="h-3 w-3 text-indigo-500" />
+                                Project Manager
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        getDeptRoleBadge(member.departmentRole)
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -440,6 +602,43 @@ const TeamManagementClient = ({
                       <li key={i}>• {perm}</li>
                     ))}
                   </ul>
+                </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Department Roles Reference Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Department Roles</CardTitle>
+          <CardDescription>
+            Department roles determine which dashboard view a member sees when they access the project.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {Object.entries(DEPT_ROLE_CONFIG).map(([deptRole, config]) => {
+              const Icon = config.icon
+              const descriptions: Record<string, string> = {
+                DEVELOPER: 'Developer dashboard with code & issues',
+                QA_TESTER: 'QA dashboard for testing & bug tracking',
+                FINANCE: 'Finance dashboard with budgets & reports',
+                SALES: 'Sales dashboard with pipeline & metrics',
+                EXECUTIVE: 'Executive overview with high-level KPIs',
+                PROJECT_MANAGER: 'Full PM dashboard with all tools',
+              }
+
+              return (
+                <div key={deptRole} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Icon className={cn('h-4 w-4', config.color.split(' ')[1])} />
+                    <span className="font-medium text-sm">{config.label}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {descriptions[deptRole]}
+                  </p>
                 </div>
               )
             })}
