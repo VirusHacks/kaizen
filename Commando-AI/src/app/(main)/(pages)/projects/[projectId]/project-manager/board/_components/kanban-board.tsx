@@ -1,6 +1,6 @@
 import React from 'react'
 import { getProjectIssues } from '../../issues/_actions/issue-actions'
-import { getProjectWorkflow } from '../../../settings/workflow/_actions/workflow-actions'
+import { getProjectWorkflow } from '@/app/(main)/(pages)/projects/[projectId]/project-manager/settings/workflow/_actions/workflow-actions'
 import { LayoutGrid } from 'lucide-react'
 import KanbanBoardClient from './kanban-board-client'
 
@@ -40,10 +40,10 @@ const KanbanBoard = async ({ projectId }: Props) => {
   // Build transition map from workflow
   const transitionMap: Record<string, string[]> = {}
   if (workflowResult.data) {
-    workflowResult.data.statuses.forEach((status) => {
+    workflowResult.data.statuses.forEach((status: { status: string }) => {
       transitionMap[status.status] = []
     })
-    workflowResult.data.transitions.forEach((t) => {
+    workflowResult.data.transitions.forEach((t: { fromStatus: { status: string }; toStatus: { status: string } }) => {
       const fromStatus = t.fromStatus.status
       const toStatus = t.toStatus.status
       if (!transitionMap[fromStatus]) {
