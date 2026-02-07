@@ -1,0 +1,340 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  clerkId      String  @unique
+  name         String?
+  email        String  @unique
+  profileImage String?
+  tier         String? @default("Free")
+  credits      String? @default("10")
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  localGoogleId    String?  @unique
+  googleResourceId String?  @unique
+
+  LocalGoogleCredential LocalGoogleCredential?
+  DiscordWebhook        DiscordWebhook[]
+  Notion                Notion[]
+  Slack                 Slack[]
+  connections           Connections[]
+  workflows             Workflows[]
+  projects              Project[]
+  assignedIssues        Issue[]                @relation("IssueAssignee")
+  reportedIssues        Issue[]                @relation("IssueReporter")
+  projectMemberships    ProjectMember[]
+}
+
+model LocalGoogleCredential {
+  id          String @id @default(uuid())
+  accessToken String @unique
+
+  folderId   String?
+  pageToken  String?
+  channelId  String  @unique @default(uuid())
+  subscribed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+}
+
+model DiscordWebhook {
+  id          String        @id @default(uuid())
+  webhookId   String        @unique
+  url         String        @unique
+  name        String
+  guildName   String
+  guildId     String
+  channelId   String        @unique
+  user        User          @relation(fields: [userId], references: [clerkId])
+  userId      String
+  connections Connections[]
+}
+
+model Slack {
+  id String @id @default(uuid())
+
+  appId            String
+  authedUserId     String
+  authedUserToken  String @unique
+  slackAccessToken String @unique
+  botUserId        String
+  teamId           String
+  teamName         String
+
+  User        User          @relation(fields: [userId], references: [clerkId])
+  userId      String
+  connections Connections[]
+}
+
+model Notion {
+  id            String        @id @default(uuid())
+  accessToken   String        @unique
+  workspaceId   String        @unique
+  databaseId    String        @unique
+  workspaceName String
+  workspaceIcon String
+  User          User          @relation(fields: [userId], references: [clerkId])
+  userId        String
+  connections   Connections[]
+}
+
+model Connections {
+  id               String          @id @default(uuid())
+  type             String          @unique
+  DiscordWebhook   DiscordWebhook? @relation(fields: [discordWebhookId], references: [id])
+  discordWebhookId String?
+  Notion           Notion?         @relation(fields: [notionId], references: [id])
+  notionId         String?
+  User             User?           @relation(fields: [userId], references: [clerkId])
+  userId           String?
+  Slack            Slack?          @relation(fields: [slackId], references: [id])
+  slackId          String?
+}
+
+model Workflows {
+  id                String   @id @default(uuid())
+  nodes             String?
+  edges             String?
+  name              String
+  discordTemplate   String?
+  notionTemplate    String?
+  slackTemplate     String?
+  slackChannels     String[]
+  slackAccessToken  String?
+  notionAccessToken String?
+  notionDbId        String?
+  flowPath          String?
+  cronPath          String?
+  publish           Boolean? @default(false)
+  description       String
+  User              User     @relation(fields: [userId], references: [clerkId])
+  userId            String
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  key         String   @unique
+  description String?
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner   User   @relation(fields: [ownerId], references: [clerkId])
+  ownerId String
+
+  issues       Issue[]
+  sprints      Sprint[]
+  workflows    ProjectWorkflow[]
+  members      ProjectMember[]
+  issueCounter Int               @default(0)
+}
+
+// ==========================================
+// TEAM MANAGEMENT
+// ==========================================
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model ProjectMember {
+  id       String      @id @default(uuid())
+  role     ProjectRole @default(MEMBER)
+  joinedAt DateTime    @default(now())
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  user   User   @relation(fields: [userId], references: [clerkId])
+  userId String
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+// Issue Management Enums
+enum IssueType {
+  EPIC
+  STORY
+  TASK
+  BUG
+  SUBTASK
+}
+
+enum IssueStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum IssuePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+}
+
+model Sprint {
+  id        String       @id @default(uuid())
+  name      String
+  goal      String?
+  startDate DateTime?
+  endDate   DateTime?
+  status    SprintStatus @default(PLANNED)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  issues Issue[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Issue {
+  id          String        @id @default(uuid())
+  number      Int
+  title       String
+  description String?
+  type        IssueType     @default(TASK)
+  status      IssueStatus   @default(TODO)
+  priority    IssuePriority @default(MEDIUM)
+  startDate   DateTime?
+  dueDate     DateTime?
+  isArchived  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  assignee   User?   @relation("IssueAssignee", fields: [assigneeId], references: [clerkId])
+  assigneeId String?
+
+  reporter   User   @relation("IssueReporter", fields: [reporterId], references: [clerkId])
+  reporterId String
+
+  // Self-relation for subtasks
+  parent   Issue?  @relation("IssueSubtasks", fields: [parentId], references: [id])
+  parentId String?
+  children Issue[] @relation("IssueSubtasks")
+
+  // Sprint relation (null = Backlog)
+  sprint   Sprint? @relation(fields: [sprintId], references: [id])
+  sprintId String?
+
+  @@unique([projectId, number])
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([sprintId])
+  @@index([dueDate])
+}
+
+// ==========================================
+// WORKFLOW ENGINE
+// ==========================================
+
+// Project Workflow - defines status flow rules for a project
+model ProjectWorkflow {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  statuses    WorkflowStatus[]
+  transitions WorkflowTransition[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+}
+
+// Workflow Status - represents a status in the workflow with ordering
+model WorkflowStatus {
+  id          String @id @default(uuid())
+  status      String // Maps to IssueStatus enum value (TODO, IN_PROGRESS, etc.)
+  displayName String
+  order       Int    @default(0)
+  color       String @default("#6B7280") // Hex color for UI
+  
+  // Position for React Flow editor (node positions)
+  positionX   Float  @default(0)
+  positionY   Float  @default(0)
+
+  // Relations
+  workflow   ProjectWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowId String
+
+  // Transitions from/to this status
+  transitionsFrom WorkflowTransition[] @relation("TransitionFrom")
+  transitionsTo   WorkflowTransition[] @relation("TransitionTo")
+
+  @@unique([workflowId, status])
+  @@index([workflowId])
+}
+
+// Workflow Transition - defines allowed status changes
+model WorkflowTransition {
+  id               String  @id @default(uuid())
+  name             String? // Optional name like "Start Work", "Complete"
+  requiresAssignee Boolean @default(false)
+  requiresComment  Boolean @default(false)
+
+  // Relations
+  workflow   ProjectWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowId String
+
+  fromStatus   WorkflowStatus @relation("TransitionFrom", fields: [fromStatusId], references: [id], onDelete: Cascade)
+  fromStatusId String
+
+  toStatus   WorkflowStatus @relation("TransitionTo", fields: [toStatusId], references: [id], onDelete: Cascade)
+  toStatusId String
+
+  // Allowed roles (stored as JSON array of role strings)
+  // Empty array = all roles allowed
+  allowedRoles String[] @default([])
+
+  @@unique([workflowId, fromStatusId, toStatusId])
+  @@index([workflowId])
+  @@index([fromStatusId])
+  @@index([toStatusId])
+}

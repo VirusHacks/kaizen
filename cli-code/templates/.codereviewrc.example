@@ -1,0 +1,51 @@
+# Code Review CLI Configuration
+
+llm:
+  provider: anthropic
+  # apiKey: set via ANTHROPIC_API_KEY env var
+  model: claude-sonnet-4-20250514
+  maxTokens: 4096
+  temperature: 0.2
+  timeout: 120000
+  retries: 3
+
+files:
+  maxFileSize: 100000
+  maxLinesPerChunk: 500
+  chunkOverlap: 50
+  ignoredPatterns:
+    - "node_modules/**"
+    - "dist/**"
+    - "build/**"
+    - "coverage/**"
+    - ".git/**"
+    - "*.min.js"
+    - "*.min.css"
+    - "*.map"
+    - "*.lock"
+    - "package-lock.json"
+    - "yarn.lock"
+  includedExtensions:
+    - ".ts"
+    - ".tsx"
+    - ".js"
+    - ".jsx"
+    - ".py"
+    - ".go"
+    - ".rs"
+    - ".java"
+    - ".c"
+    - ".cpp"
+    - ".cs"
+    - ".rb"
+    - ".php"
+
+review:
+  defaultMode: staged
+  baseBranch: main
+  outputFile: "code-review-{date}.md"
+  concurrency: 3
+
+project:
+  name: ""
+  environment: development

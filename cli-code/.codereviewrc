@@ -1,0 +1,41 @@
+llm:
+  provider: gemini
+  model: gemini-2.5-flash
+  maxTokens: 8192
+  temperature: 0.2
+  timeout: 120000
+  retries: 3
+files:
+  maxFileSize: 100000
+  maxLinesPerChunk: 500
+  chunkOverlap: 50
+  ignoredPatterns:
+    - node_modules/**
+    - dist/**
+    - build/**
+    - coverage/**
+    - .git/**
+    - '*.min.js'
+    - '*.min.css'
+    - '*.map'
+  includedExtensions:
+    - .ts
+    - .tsx
+    - .js
+    - .jsx
+    - .py
+    - .go
+    - .rs
+    - .java
+    - .c
+    - .cpp
+    - .h
+    - .hpp
+review:
+  defaultMode: staged
+  baseBranch: main
+  outputFile: code-review-{date}.md
+  concurrency: 3
+project:
+  name: cli-code
+  environment: development

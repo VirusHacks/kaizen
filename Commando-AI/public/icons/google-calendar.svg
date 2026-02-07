@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Calendar background -->
+  <rect x="20" y="40" width="160" height="140" rx="8" fill="#fff" stroke="#e0e0e0" stroke-width="2"/>
+  
+  <!-- Calendar header -->
+  <rect x="20" y="40" width="160" height="35" rx="8" fill="#4285F4"/>
+  <rect x="20" y="60" width="160" height="15" fill="#4285F4"/>
+  
+  <!-- Calendar rings -->
+  <rect x="55" y="25" width="12" height="30" rx="6" fill="#5F6368"/>
+  <rect x="133" y="25" width="12" height="30" rx="6" fill="#5F6368"/>
+  
+  <!-- Google colors in grid -->
+  <rect x="40" y="95" width="35" height="25" rx="3" fill="#EA4335"/>
+  <rect x="82" y="95" width="35" height="25" rx="3" fill="#FBBC05"/>
+  <rect x="124" y="95" width="35" height="25" rx="3" fill="#34A853"/>
+  
+  <rect x="40" y="130" width="35" height="25" rx="3" fill="#4285F4"/>
+  <rect x="82" y="130" width="35" height="25" rx="3" fill="#EA4335"/>
+  <rect x="124" y="130" width="35" height="25" rx="3" fill="#FBBC05"/>
+</svg>

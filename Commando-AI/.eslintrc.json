@@ -1,0 +1,33 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "standard",
+    "plugin:tailwindcss/recommended",
+    "prettier"
+  ],
+  "rules": {
+    "camelcase": "off",
+    "eqeqeq": "warn",
+    "spaced-comment": "off",
+    "no-unused-vars": "warn",
+    "import/no-duplicates": "warn",
+    "import/first": "warn",
+    "object-shorthand": "off",
+    "dot-notation": "off",
+    "no-var": "warn",
+    "prefer-const": "warn",
+    "no-void": "off",
+    "no-case-declarations": "warn",
+    "no-useless-return": "warn",
+    "array-callback-return": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "tailwindcss/no-custom-classname": "off",
+    "tailwindcss/classnames-order": "off",
+    "tailwindcss/enforces-shorthand": "off",
+    "tailwindcss/no-unnecessary-arbitrary-value": "off",
+    "tailwindcss/migration-from-tailwind-2": "off",
+    "tailwindcss/enforces-negative-arbitrary-values": "off",
+    "@next/next/no-img-element": "warn",
+    "react/no-unescaped-entities": "warn"
+  }
+}

@@ -1,0 +1,123 @@
+const LANGUAGE_MAP: Record<string, string> = {
+  '.ts': 'typescript',
+  '.tsx': 'typescript',
+  '.js': 'javascript',
+  '.jsx': 'javascript',
+  '.mjs': 'javascript',
+  '.cjs': 'javascript',
+  '.py': 'python',
+  '.go': 'go',
+  '.rs': 'rust',
+  '.java': 'java',
+  '.c': 'c',
+  '.cpp': 'cpp',
+  '.cc': 'cpp',
+  '.cxx': 'cpp',
+  '.h': 'c',
+  '.hpp': 'cpp',
+  '.hxx': 'cpp',
+  '.cs': 'csharp',
+  '.rb': 'ruby',
+  '.php': 'php',
+  '.swift': 'swift',
+  '.kt': 'kotlin',
+  '.kts': 'kotlin',
+  '.scala': 'scala',
+  '.vue': 'vue',
+  '.svelte': 'svelte',
+  '.html': 'html',
+  '.htm': 'html',
+  '.css': 'css',
+  '.scss': 'scss',
+  '.sass': 'sass',
+  '.less': 'less',
+  '.sql': 'sql',
+  '.sh': 'bash',
+  '.bash': 'bash',
+  '.zsh': 'bash',
+  '.fish': 'fish',
+  '.ps1': 'powershell',
+  '.yaml': 'yaml',
+  '.yml': 'yaml',
+  '.json': 'json',
+  '.toml': 'toml',
+  '.xml': 'xml',
+  '.md': 'markdown',
+  '.mdx': 'markdown',
+  '.graphql': 'graphql',
+  '.gql': 'graphql',
+  '.proto': 'protobuf',
+  '.r': 'r',
+  '.R': 'r',
+  '.lua': 'lua',
+  '.dart': 'dart',
+  '.ex': 'elixir',
+  '.exs': 'elixir',
+  '.erl': 'erlang',
+  '.hs': 'haskell',
+  '.ml': 'ocaml',
+  '.mli': 'ocaml',
+  '.clj': 'clojure',
+  '.cljs': 'clojure',
+  '.tf': 'terraform',
+  '.hcl': 'hcl',
+  '.dockerfile': 'dockerfile',
+  '.makefile': 'makefile',
+};
+
+const FILENAME_MAP: Record<string, string> = {
+  'Dockerfile': 'dockerfile',
+  'Makefile': 'makefile',
+  'CMakeLists.txt': 'cmake',
+  'Jenkinsfile': 'groovy',
+  'Vagrantfile': 'ruby',
+  'Gemfile': 'ruby',
+  'Rakefile': 'ruby',
+};
+
+export function detectLanguage(extensionOrFilename: string): string {
+  // Check by filename first
+  if (FILENAME_MAP[extensionOrFilename]) {
+    return FILENAME_MAP[extensionOrFilename];
+  }
+
+  // Check by extension
+  const ext = extensionOrFilename.startsWith('.') ? extensionOrFilename : `.${extensionOrFilename}`;
+  return LANGUAGE_MAP[ext.toLowerCase()] || 'text';
+}
+
+export function getLanguageDisplayName(language: string): string {
+  const displayNames: Record<string, string> = {
+    typescript: 'TypeScript',
+    javascript: 'JavaScript',
+    python: 'Python',
+    go: 'Go',
+    rust: 'Rust',
+    java: 'Java',
+    c: 'C',
+    cpp: 'C++',
+    csharp: 'C#',
+    ruby: 'Ruby',
+    php: 'PHP',
+    swift: 'Swift',
+    kotlin: 'Kotlin',
+    scala: 'Scala',
+    vue: 'Vue',
+    svelte: 'Svelte',
+    html: 'HTML',
+    css: 'CSS',
+    scss: 'SCSS',
+    sql: 'SQL',
+    bash: 'Shell',
+    yaml: 'YAML',
+    json: 'JSON',
+    toml: 'TOML',
+    xml: 'XML',
+    markdown: 'Markdown',
+    graphql: 'GraphQL',
+    protobuf: 'Protocol Buffers',
+    dockerfile: 'Dockerfile',
+  };
+
+  return displayNames[language] || language;
+}

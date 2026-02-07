@@ -1,0 +1,12 @@
+Hello, is this going on properly?
+ Hello, hello, hello, how are you?
+ Hello, hello, hello.
+ Hello, how are you?
+ Are you working? Are you working?
+ Cap chal rahe ho. Cap chal rahe ho. Cap chal rahe ho.
+ For example, how the lecture or the test would be conducted today, it would give me all the records of that day.
+ It transcribes it and creates a Racks AdWord on it, here you can just ask what is going on. Now we created a dump. What it does is it creates embeddings for it, creates a separate embedding for a separate file. So we put a sample file because we can't show you live, it will, it generates from live audio also and it directly puts it there and you can ask from that. And another thing is it gives you summary. So basically if you are, let's say in a meet, like everyone, like students also, they don't pay attention. So if they are not clear, so they can just directly ask over here. So that is a special one and our main problem statement was via audio-based, everything was audio-based. So here also we tried to transfer, like every language.
+ So, here we are to discuss about the hackathons and currently we are in the hackathons. So, this meeting is regarding the sample testing of the hackathons. So, basically about the flow, what are we going to build, etc.
+ The voice recording is getting over. Hello, am I audible? Okay, I guess I am audible. So, we will start with the lecture today.
+ Hello, now I feel like we will take test today. In this test, we will include Mathematics, English... Translation on the side.
+ 
