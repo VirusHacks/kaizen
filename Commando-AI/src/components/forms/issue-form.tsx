@@ -41,7 +41,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Loader2, Bug, Zap, BookOpen, CheckSquare, Layers, CalendarIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import { createIssue, updateIssue } from '@/app/(main)/(pages)/projects/[projectId]/issues/_actions/issue-actions'
+import { createIssue, updateIssue } from '@/app/(main)/(pages)/projects/[projectId]/project-manager/issues/_actions/issue-actions'
 import { useModal } from '@/providers/modal-provider'
 import { cn } from '@/lib/utils'
 

@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,6 +23,7 @@ import { useRouter } from 'next/navigation'
 import { useModal } from '@/providers/modal-provider'
 import CustomModal from '@/components/global/custom-modal'
 import ProjectForm from '@/components/forms/project-form'
+import ProjectRoleSelectForm from '@/components/forms/project-role-select-form'
 
 type Props = {
   id: string
@@ -77,16 +77,30 @@ const ProjectCard = ({ id, name, projectKey, description, isArchived, createdAt 
     )
   }
 
+  const handleOpenProject = () => {
+    setOpen(
+      <CustomModal
+        title="Access Project"
+        subheading="Select your role and enter credentials to access this project."
+      >
+        <ProjectRoleSelectForm projectId={id} />
+      </CustomModal>
+    )
+  }
+
   return (
     <Card className="flex w-full items-center justify-between hover:border-primary/50 transition-colors">
       <CardHeader className="flex flex-col gap-2">
-        <Link href={`/projects/${id}`} className="flex flex-row items-center gap-3">
+        <button 
+          onClick={handleOpenProject}
+          className="flex flex-row items-center gap-3 text-left w-full cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <FolderKanban className="h-5 w-5 text-primary" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <CardTitle className="text-lg">{name}</CardTitle>
+          button<CardTitle className="text-lg">{name}</CardTitle>
               <Badge variant="secondary" className="font-mono text-xs">
                 {projectKey}
               </Badge>

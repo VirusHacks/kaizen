@@ -9,7 +9,7 @@ import {
   UpdateIssueSchema,
   IssueStatusEnum,
 } from '@/lib/types'
-import { validateTransition } from '../../settings/workflow/_actions/workflow-actions'
+import { validateTransition } from '../../../settings/workflow/_actions/workflow-actions'
 
 /**
  * Get the current user ID using auth() - lighter than currentUser()

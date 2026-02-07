@@ -27,7 +27,7 @@ import {
   removeIssueFromSprint,
   startSprint,
   completeSprint,
-} from '../../sprints/_actions/sprint-actions'
+} from '../../../sprints/_actions/sprint-actions'
 
 // Types
 type BacklogIssue = {

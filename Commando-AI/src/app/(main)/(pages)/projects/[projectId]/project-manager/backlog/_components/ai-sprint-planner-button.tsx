@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { AISprintPlannerModal, AIButton } from '@/components/ai'
 import { planSprintWithAI } from '@/lib/ai/ai.actions'
-import { moveIssueToSprint } from '../../sprints/_actions/sprint-actions'
+import { moveIssueToSprint } from '../../../sprints/_actions/sprint-actions'
 import type { AISprintPlan } from '@/lib/ai/ai.types'
 
 type Props = {

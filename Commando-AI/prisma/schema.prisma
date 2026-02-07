@@ -169,10 +169,22 @@ enum ProjectRole {
   VIEWER
 }
 
+enum DepartmentRole {
+  DEVELOPER
+  QA_TESTER
+  FINANCE
+  SALES
+  EXECUTIVE
+  PROJECT_MANAGER
+}
+
 model ProjectMember {
-  id       String      @id @default(uuid())
-  role     ProjectRole @default(MEMBER)
-  joinedAt DateTime    @default(now())
+  id             String          @id @default(uuid())
+  role           ProjectRole     @default(MEMBER)
+  departmentRole DepartmentRole? // Optional department role for accessing specific dashboards
+  memberId       String?         // Custom member ID for project access
+  password       String?         // Hashed password for project access
+  joinedAt       DateTime        @default(now())
 
   // Relations
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

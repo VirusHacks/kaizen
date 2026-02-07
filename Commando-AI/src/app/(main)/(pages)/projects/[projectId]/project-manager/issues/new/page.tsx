@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import IssueForm from '@/components/forms/issue-form'
-import { getProjectById } from '../../../_actions/project-actions'
+import { getProjectById } from '../../../../_actions/project-actions'
 import { notFound } from 'next/navigation'
 
 type Props = {
