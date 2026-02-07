@@ -19,6 +19,7 @@ model User {
   profileImage String?
   tier         String? @default("Free")
   credits      String? @default("10")
+  isSuperUser  Boolean @default(false)
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -170,6 +171,11 @@ model Project {
   resourceAllocations ResourceAllocation[]
   resourceConfig      ResourceConfig?
   resourceAuditLogs   ResourceAuditLog[]
+
+  // Agentic Collaboration
+  agentProfiles  AgentProfile[]
+  agentMessages  AgentMessage[]
+  agentDecisions AgentDecision[]
 }
 
 model ProjectSetup {
@@ -623,4 +629,199 @@ model ResourceAuditLog {
   @@index([projectId])
   @@index([createdAt])
   @@index([action])
+}
+
+// ==========================================
+// AGENTIC COLLABORATION SYSTEM
+// ==========================================
+
+enum AgentType {
+  DEVELOPER
+  MANAGER
+  QA
+  OPTIMIZER
+  SCHEDULER
+}
+
+enum AgentStatus {
+  ACTIVE
+  IDLE
+  PAUSED
+  DISABLED
+}
+
+enum AgentMessageType {
+  STATUS_UPDATE
+  HELP_REQUEST
+  TASK_OFFER
+  NEGOTIATION_PROPOSAL
+  NEGOTIATION_RESPONSE
+  APPROVAL_REQUEST
+  APPROVAL_RESPONSE
+  ALERT
+  BROADCAST
+  PLANNING_TRIGGER
+}
+
+enum AgentMessageStatus {
+  PENDING
+  ACKNOWLEDGED
+  RESOLVED
+  EXPIRED
+  CANCELLED
+}
+
+enum AgentDecisionType {
+  TASK_REASSIGNMENT
+  DEADLINE_EXTENSION
+  HELP_REQUEST
+  WORKLOAD_REBALANCE
+  BLOCKER_ESCALATION
+  REVIEW_ASSIGNMENT
+  SPRINT_REPLANNING
+  BURNOUT_ALERT
+}
+
+enum AgentDecisionStatus {
+  PROPOSED
+  APPROVED_BY_AGENT
+  PENDING_HUMAN
+  APPROVED_BY_HUMAN
+  REJECTED_BY_HUMAN
+  AUTO_EXECUTED
+  EXPIRED
+}
+
+enum AutonomyLevel {
+  MONITOR     // Observe only
+  SUGGEST     // Propose actions, no auto-execution
+  NEGOTIATE   // Agents negotiate, humans approve
+  LOW_RISK    // Auto-execute low-risk, approve high-risk
+  FULL_AUTO   // Full autonomy with daily digest
+}
+
+// Per-member AI agent profile
+model AgentProfile {
+  id        String      @id @default(uuid())
+  projectId String
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId    String      // clerkId of the team member this agent represents
+  agentType AgentType
+  status    AgentStatus @default(ACTIVE)
+
+  // Agent state (persisted between runs)
+  currentState   Json    @default("{}") // { activeGoals, blockers, recentActions, mood }
+  memory         Json    @default("[]") // Recent context window for LLM
+  preferences    Json    @default("{}") // { autoAcceptThreshold, communicationStyle }
+
+  // Performance tracking
+  trustScore        Float @default(0.5) // 0-1, how often humans agree with this agent
+  decisionsProposed Int   @default(0)
+  decisionsAccepted Int   @default(0)
+  totalInteractions Int   @default(0)
+
+  // Scheduling
+  lastRunAt    DateTime?
+  nextRunAt    DateTime?
+  runInterval  Int       @default(600) // seconds between runs (default 10min)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sentMessages     AgentMessage[] @relation("SentMessages")
+  receivedMessages AgentMessage[] @relation("ReceivedMessages")
+  decisions        AgentDecision[]
+
+  @@unique([projectId, userId, agentType])
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+}
+
+// Agent-to-agent communication
+model AgentMessage {
+  id        String @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  fromAgentId String
+  fromAgent   AgentProfile @relation("SentMessages", fields: [fromAgentId], references: [id], onDelete: Cascade)
+
+  toAgentId   String?      // null = broadcast to all project agents
+  toAgent     AgentProfile? @relation("ReceivedMessages", fields: [toAgentId], references: [id], onDelete: Cascade)
+
+  messageType   AgentMessageType
+  status        AgentMessageStatus @default(PENDING)
+  priority      Int                @default(5) // 1=critical, 10=low
+
+  // Content
+  subject   String
+  payload   Json       // Structured message body
+  reasoning String?    // LLM reasoning trace
+
+  // Threading
+  threadId  String?    // Group related messages into conversations
+  parentId  String?    // Reply-to message ID
+  parent    AgentMessage?  @relation("MessageThread", fields: [parentId], references: [id])
+  replies   AgentMessage[] @relation("MessageThread")
+
+  // Metadata
+  expiresAt DateTime?
+  readAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([fromAgentId])
+  @@index([toAgentId])
+  @@index([threadId])
+  @@index([messageType])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Agent decision audit trail
+model AgentDecision {
+  id        String @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  agentId String
+  agent   AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  decisionType   AgentDecisionType
+  status         AgentDecisionStatus @default(PROPOSED)
+
+  // What the agent decided
+  title       String
+  description String
+  reasoning   String   // Full LLM reasoning trace
+  confidence  Float    @default(0.5) // 0-1
+
+  // Action details
+  actionPayload Json   // { taskId, fromUser, toUser, delayDays, etc }
+  impactEstimate Json  @default("{}") // { deliveryChange, costChange, burnoutChange }
+
+  // Human review
+  reviewedBy    String?    // clerkId
+  reviewedAt    DateTime?
+  reviewNote    String?
+
+  // Outcome tracking
+  wasExecuted   Boolean  @default(false)
+  executedAt    DateTime?
+  actualOutcome Json?    // Measured results
+
+  // Related messages (the negotiation that led to this decision)
+  relatedThreadId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([agentId])
+  @@index([decisionType])
+  @@index([status])
+  @@index([createdAt])
 }
