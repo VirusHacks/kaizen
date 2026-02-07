@@ -75,9 +75,14 @@ const ConnectionCard = ({
       case 'Gmail':
         return '/api/auth/google'
       case 'GitHub':
-        const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'your_github_client_id_here'
-        const redirectUri = encodeURIComponent(process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI || 'https://localhost:3000/api/auth/callback/github')
-        return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=repo,user,read:org`
+        // GitHub App OAuth flow
+        const clientId = process.env.NEXT_PUBLIC_GITHUB_APP_CLIENT_ID || ''
+        const redirectUri = encodeURIComponent(
+          process.env.NEXT_PUBLIC_URL
+            ? `${process.env.NEXT_PUBLIC_URL}/api/auth/callback/github`
+            : 'https://localhost:3000/api/auth/callback/github'
+        )
+        return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}`
       default:
         return '#'
     }

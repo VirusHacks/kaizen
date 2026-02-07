@@ -3,22 +3,49 @@ import { getProjectById } from '../../_actions/project-actions'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Code, ArrowLeft, FolderKanban } from 'lucide-react'
+import { Code, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { getMyAssignedIssues, getDevStats } from './_actions/developer-actions'
+import { getProjectWorkflow } from '@/app/(main)/(pages)/projects/[projectId]/project-manager/settings/workflow/_actions/workflow-actions'
+import DeveloperDashboardClient from './_components/developer-dashboard-client'
 
 type Props = {
   params: { projectId: string }
 }
 
-const DeveloperDashboard = async ({ params }: Props) => {
-  const { data: project, error } = await getProjectById(params.projectId)
+const DeveloperPage = async ({ params }: Props) => {
+  const [projectResult, issuesResult, statsResult, workflowResult] = await Promise.all([
+    getProjectById(params.projectId),
+    getMyAssignedIssues(params.projectId),
+    getDevStats(params.projectId),
+    getProjectWorkflow(params.projectId),
+  ])
 
-  if (error || !project) {
+  const { data: project, error: projectError } = projectResult
+
+  if (projectError || !project) {
     notFound()
   }
 
+  // Build transition map
+  const transitionMap: Record<string, string[]> = {}
+  if (workflowResult.data) {
+    workflowResult.data.statuses.forEach((status: { status: string }) => {
+      transitionMap[status.status] = []
+    })
+    workflowResult.data.transitions.forEach((t: { fromStatus: { status: string }; toStatus: { status: string } }) => {
+      const fromStatus = t.fromStatus.status
+      const toStatus = t.toStatus.status
+      if (!transitionMap[fromStatus]) {
+        transitionMap[fromStatus] = []
+      }
+      transitionMap[fromStatus].push(toStatus)
+    })
+  }
+
   return (
-    <div className="flex flex-col relative">
+    <div className="flex flex-col relative h-full">
+      {/* Header */}
       <div className="sticky top-0 z-[10] p-6 bg-background/50 backdrop-blur-lg border-b">
         <div className="flex items-center gap-4">
           <Link href="/projects">
@@ -32,7 +59,7 @@ const DeveloperDashboard = async ({ params }: Props) => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Developer Dashboard</h1>
+                <h1 className="text-2xl font-bold">Developer View</h1>
                 <Badge variant="secondary" className="font-mono text-sm">
                   {project.key}
                 </Badge>
@@ -45,19 +72,17 @@ const DeveloperDashboard = async ({ params }: Props) => {
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <FolderKanban className="h-16 w-16 text-muted-foreground/50" />
-          <h2 className="text-2xl font-semibold">Developer Dashboard</h2>
-          <p className="text-muted-foreground text-center max-w-md">
-            Welcome to the Developer Dashboard. This view is customized for developers to manage code,
-            track technical tasks, and collaborate on development work.
-          </p>
-          <Badge variant="outline" className="mt-4">Coming Soon</Badge>
-        </div>
-      </div>
+      {/* Main Content */}
+      <DeveloperDashboardClient
+        projectId={params.projectId}
+        projectKey={project.key}
+        projectName={project.name}
+        initialIssues={issuesResult.data || []}
+        stats={statsResult.data || null}
+        allowedTransitions={transitionMap}
+      />
     </div>
   )
 }
 
-export default DeveloperDashboard
+export default DeveloperPage
