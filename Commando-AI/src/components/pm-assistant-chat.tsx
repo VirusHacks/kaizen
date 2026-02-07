@@ -51,7 +51,6 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [useVoiceResponse, setUseVoiceResponse] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -76,6 +75,8 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
     async (content: string, fromVoice = false) => {
       if (!content.trim() || isLoading) return;
 
+      console.log('📨 sendMessage called with fromVoice:', fromVoice);
+
       const userMessage: Message = {
         id: crypto.randomUUID(),
         role: 'user',
@@ -86,11 +87,6 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
       setMessages((prev) => [...prev, userMessage]);
       setInput('');
       setIsLoading(true);
-
-      // Track if this message came from voice
-      if (fromVoice) {
-        setUseVoiceResponse(true);
-      }
 
       try {
         const apiMessages = [...messages, userMessage].map((m) => ({
@@ -108,7 +104,13 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
         });
 
         if (!res.ok) {
-          throw new Error('Failed to get response');
+          const errorText = await res.text();
+          console.error('❌ API Error Response:', {
+            status: res.status,
+            statusText: res.statusText,
+            body: errorText,
+          });
+          throw new Error(`API Error: ${res.status} - ${errorText}`);
         }
 
         const data = await res.json();
@@ -124,11 +126,12 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
         setMessages((prev) => [...prev, assistantMessage]);
 
         // If the user used voice, respond with voice
-        if (useVoiceResponse) {
+        if (fromVoice) {
+          console.log('🎙️ Voice input detected, responding with voice...');
           await speakText(data.message);
-          setUseVoiceResponse(false);
         }
-      } catch {
+      } catch (error) {
+        console.error('❌ AI Agent Error:', error);
         const errorMessage: Message = {
           id: crypto.randomUUID(),
           role: 'assistant',
@@ -136,6 +139,12 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
+
+        // Speak error message if from voice
+        if (fromVoice) {
+          console.log('🎙️ Speaking error message...');
+          await speakText('Sorry, something went wrong. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -152,7 +161,6 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
 
   const clearChat = () => {
     setMessages([]);
-    setUseVoiceResponse(false);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -161,6 +169,10 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
 
   const speakText = async (text: string) => {
     try {
+      console.log(
+        '🔊 Converting text to speech:',
+        text.substring(0, 50) + '...',
+      );
       setIsSpeaking(true);
 
       const response = await fetch('/api/tts', {
@@ -170,9 +182,12 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
       });
 
       if (!response.ok) {
+        const error = await response.text();
+        console.error('TTS API error:', error);
         throw new Error('Text-to-speech failed');
       }
 
+      console.log('✅ Audio received, playing...');
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
 
@@ -180,16 +195,19 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
       audioRef.current = audio;
 
       audio.onended = () => {
+        console.log('🎵 Audio playback finished');
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
       };
 
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
       };
 
       await audio.play();
+      console.log('▶️ Audio playing...');
     } catch (error) {
       console.error('Speech error:', error);
       setIsSpeaking(false);
@@ -249,8 +267,10 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
 
       const data = await response.json();
       const transcribedText = data.text || '';
+      console.log('📝 Transcribed text:', transcribedText);
 
       if (transcribedText.trim()) {
+        console.log('🎤 Calling sendMessage with fromVoice=true');
         await sendMessage(transcribedText, true);
       }
     } catch (error) {
