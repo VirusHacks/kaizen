@@ -35,6 +35,9 @@ const Connections = async (props: Props) => {
     team_name,
     github_access_token,
     github_username,
+    github_installation_id,
+    github_app_slug,
+    github_setup_action,
   } = props.searchParams ?? {}
 
   const user = await currentUser()
@@ -88,7 +91,9 @@ const Connections = async (props: Props) => {
         await onGitHubConnect(
           github_access_token,
           github_username,
-          user.id
+          user.id,
+          github_installation_id ? parseInt(github_installation_id) : undefined,
+          github_app_slug
         )
       }
     } catch (error) {
