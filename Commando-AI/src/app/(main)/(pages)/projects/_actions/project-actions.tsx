@@ -124,6 +124,31 @@ export const getProjectById = async (projectId: string) => {
 }
 
 /**
+ * Check if GitHub is connected for the current user
+ */
+export const checkGitHubConnection = async () => {
+  const { userId } = await auth()
+  if (!userId) return false
+  const connection = await getGitHubConnection(userId)
+  return !!connection
+}
+
+/**
+ * Parse a GitHub URL into owner and repo name
+ */
+function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname !== 'github.com') return null
+    const parts = parsed.pathname.split('/').filter(Boolean)
+    if (parts.length < 2) return null
+    return { owner: parts[0], repo: parts[1].replace(/\.git$/, '') }
+  } catch {
+    return null
+  }
+}
+
+/**
  * Create a new project
  */
 export const createProject = async (
@@ -140,7 +165,21 @@ export const createProject = async (
     return { error: 'Invalid fields', data: null }
   }
 
-  const { name, key, description } = validatedFields.data
+  const {
+    name,
+    key,
+    description,
+    startDate,
+    endDate,
+    teamSize,
+    techStack,
+    vision,
+    aiInstructions,
+    githubOption,
+    githubRepoName,
+    githubRepoVisibility,
+    githubRepoUrl,
+  } = validatedFields.data
 
   try {
     // Check if project key already exists
@@ -152,16 +191,85 @@ export const createProject = async (
       return { error: 'Project key already exists', data: null }
     }
 
-    const project = await db.project.create({
-      data: {
-        name,
-        key: key.toUpperCase(),
-        description: description || '',
-        ownerId: user.id,
-      },
+    // Handle GitHub integration
+    let repoUrl: string | undefined
+    let repoName: string | undefined
+    let repoOwner: string | undefined
+
+    if (githubOption === 'create' && githubRepoName) {
+      const result = await createRepository({
+        name: githubRepoName,
+        description: description || `Project: ${name}`,
+        isPrivate: githubRepoVisibility === 'private',
+        autoInit: true,
+      })
+
+      if (result.error || !result.data) {
+        return { error: result.error || 'Failed to create GitHub repo', data: null }
+      }
+
+      repoUrl = result.data.html_url
+      repoName = result.data.name
+      repoOwner = result.data.owner.login
+    } else if (githubOption === 'connect' && githubRepoUrl) {
+      const parsed = parseGitHubUrl(githubRepoUrl)
+      if (!parsed) {
+        return { error: 'Invalid GitHub repository URL', data: null }
+      }
+
+      // Verify repo is accessible
+      const result = await getRepository(parsed.owner, parsed.repo)
+      if (result.error || !result.data) {
+        return { error: 'Could not access the repository. Make sure it exists and you have access.', data: null }
+      }
+
+      repoUrl = result.data.html_url
+      repoName = result.data.name
+      repoOwner = result.data.owner.login
+    }
+
+    // Create project + setup + membership in a transaction
+    const project = await db.$transaction(async (tx) => {
+      // 1. Create the project
+      const proj = await tx.project.create({
+        data: {
+          name,
+          key: key.toUpperCase(),
+          description: description || '',
+          ownerId: user.id,
+        },
+      })
+
+      // 2. Create ProjectSetup with extended fields
+      await tx.projectSetup.create({
+        data: {
+          projectId: proj.id,
+          startDate: startDate ? new Date(startDate) : null,
+          endDate: endDate ? new Date(endDate) : null,
+          teamSize: teamSize ? Number(teamSize) : null,
+          techStack: techStack || null,
+          vision: vision || null,
+          aiInstructions: aiInstructions || null,
+          githubRepoUrl: repoUrl || null,
+          githubRepoName: repoName || null,
+          githubRepoOwner: repoOwner || null,
+        },
+      })
+
+      // 3. Add current user as ProjectMember with role OWNER + departmentRole PM
+      await tx.projectMember.create({
+        data: {
+          projectId: proj.id,
+          userId: user.id,
+          role: 'OWNER',
+          departmentRole: 'PROJECT_MANAGER',
+        },
+      })
+
+      return proj
     })
 
-    // Auto-create default workflow for new project
+    // Auto-create default workflow for new project (outside transaction — non-critical)
     await createDefaultWorkflow(project.id)
 
     revalidatePath('/projects')

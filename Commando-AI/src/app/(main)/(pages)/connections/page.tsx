@@ -6,6 +6,7 @@ import { clerkClient } from '@clerk/nextjs/server'
 import { onDiscordConnect } from './_actions/discord-connection'
 import { onNotionConnect } from './_actions/notion-connection'
 import { onSlackConnect } from './_actions/slack-connection'
+import { onGitHubConnect } from './_actions/github-connection'
 import { getUserData } from './_actions/get-user'
 
 type Props = {
@@ -32,6 +33,8 @@ const Connections = async (props: Props) => {
     bot_user_id,
     team_id,
     team_name,
+    github_access_token,
+    github_username,
   } = props.searchParams ?? {}
 
   const user = await currentUser()
@@ -76,6 +79,15 @@ const Connections = async (props: Props) => {
           bot_user_id || '',
           team_id,
           team_name || '',
+          user.id
+        )
+      }
+
+      // Only call GitHub connect if we have the required params
+      if (github_access_token && github_username) {
+        await onGitHubConnect(
+          github_access_token,
+          github_username,
           user.id
         )
       }

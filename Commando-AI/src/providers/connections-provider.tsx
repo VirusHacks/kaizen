@@ -34,6 +34,7 @@ export type ConnectionProviderProps = {
     slack?: string
     googleCalendar?: string
     gmail?: string
+    github?: string
   }
   setNotionNode: React.Dispatch<React.SetStateAction<any>>
   slackNode: {
@@ -47,6 +48,12 @@ export type ConnectionProviderProps = {
     content: string
   }
   setSlackNode: React.Dispatch<React.SetStateAction<any>>
+  githubNode: {
+    accessToken: string
+    username: string
+    content: string
+  }
+  setGithubNode: React.Dispatch<React.SetStateAction<any>>
   setWorkFlowTemplate: React.Dispatch<
     React.SetStateAction<{
       discord?: string
@@ -54,6 +61,7 @@ export type ConnectionProviderProps = {
       slack?: string
       googleCalendar?: string
       gmail?: string
+      github?: string
     }>
   >
   isLoading: boolean
@@ -92,6 +100,7 @@ const InitialValues: ConnectionProviderProps = {
     slack: '',
     googleCalendar: '',
     gmail: '',
+    github: '',
   },
   slackNode: {
     appId: '',
@@ -103,6 +112,11 @@ const InitialValues: ConnectionProviderProps = {
     teamName: '',
     content: '',
   },
+  githubNode: {
+    accessToken: '',
+    username: '',
+    content: '',
+  },
   isLoading: false,
   setGoogleNode: () => undefined,
   setGoogleCalendarNode: () => undefined,
@@ -110,6 +124,7 @@ const InitialValues: ConnectionProviderProps = {
   setDiscordNode: () => undefined,
   setNotionNode: () => undefined,
   setSlackNode: () => undefined,
+  setGithubNode: () => undefined,
   setIsLoading: () => undefined,
   setWorkFlowTemplate: () => undefined,
 }
@@ -124,6 +139,7 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
   const [gmailNode, setGmailNode] = useState(InitialValues.gmailNode)
   const [notionNode, setNotionNode] = useState(InitialValues.notionNode)
   const [slackNode, setSlackNode] = useState(InitialValues.slackNode)
+  const [githubNode, setGithubNode] = useState(InitialValues.githubNode)
   const [isLoading, setIsLoading] = useState(InitialValues.isLoading)
   const [workflowTemplate, setWorkFlowTemplate] = useState(
     InitialValues.workflowTemplate
@@ -142,6 +158,8 @@ export const ConnectionsProvider = ({ children }: ConnectionWithChildProps) => {
     setNotionNode,
     slackNode,
     setSlackNode,
+    githubNode,
+    setGithubNode,
     isLoading,
     setIsLoading,
     workflowTemplate,

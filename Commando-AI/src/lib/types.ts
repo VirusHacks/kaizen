@@ -19,6 +19,24 @@ export const ProjectFormSchema = z.object({
     .max(10, 'Key must be at most 10 characters')
     .regex(/^[A-Z0-9]+$/, 'Key must be uppercase letters and numbers only'),
   description: z.string().optional(),
+
+  // Timeline
+  startDate: z.string().optional(), // ISO date string
+  endDate: z.string().optional(),
+
+  // Team
+  teamSize: z.coerce.number().int().positive().optional().or(z.literal('')),
+
+  // Technical context
+  techStack: z.string().optional(),
+  vision: z.string().optional(),
+  aiInstructions: z.string().optional(),
+
+  // GitHub integration
+  githubOption: z.enum(['none', 'create', 'connect']).default('none'),
+  githubRepoName: z.string().optional(),
+  githubRepoVisibility: z.enum(['public', 'private']).default('private'),
+  githubRepoUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
 })
 
 // Issue Types matching Prisma enums
@@ -67,7 +85,7 @@ export const SprintFormSchema = z.object({
 
 export const UpdateSprintSchema = SprintFormSchema.partial()
 
-export type ConnectionTypes = 'Google Drive' | 'Google Calendar' | 'Gmail' | 'Notion' | 'Slack' | 'Discord'
+export type ConnectionTypes = 'Google Drive' | 'Google Calendar' | 'Gmail' | 'Notion' | 'Slack' | 'Discord' | 'GitHub'
 
 export type Connection = {
   title: ConnectionTypes

@@ -72,6 +72,13 @@ export async function POST(request: NextRequest) {
         })
         break
 
+      case 'GitHub':
+        // Clear GitHub connection from database
+        await db.gitHub.deleteMany({
+          where: { userId: userId }
+        })
+        break
+
       default:
         return NextResponse.json({ error: 'Unknown service' }, { status: 400 })
     }
