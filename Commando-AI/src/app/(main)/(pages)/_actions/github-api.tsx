@@ -3,13 +3,15 @@
 import { auth } from '@clerk/nextjs/server'
 import { getGitHubConnection } from '../connections/_actions/github-connection'
 import { Octokit } from '@octokit/rest'
+import { isGitHubAppConfigured, getInstallationOctokit } from '@/lib/github-app'
 
 // ==========================================
 // CLIENT SETUP
 // ==========================================
 
 /**
- * Get authenticated Octokit client for the current user
+ * Get authenticated Octokit client for the current user.
+ * Prefers GitHub App installation token if available, falls back to user OAuth token.
  */
 export async function getGitHubClient() {
   const { userId } = await auth()
@@ -21,7 +23,21 @@ export async function getGitHubClient() {
   const github = await getGitHubConnection(userId)
   
   if (!github) {
-    throw new Error('GitHub not connected')
+    throw new Error('GitHub not connected. Please connect GitHub from the Connections page.')
+  }
+
+  // Use installation token if available AND GitHub App is configured
+  if (github.installationId && isGitHubAppConfigured()) {
+    try {
+      return await getInstallationOctokit(github.installationId)
+    } catch (err) {
+      console.warn('[GITHUB_CLIENT] Failed to get installation octokit, falling back to user token:', err)
+    }
+  }
+
+  // Fall back to user's personal access token (OAuth App flow)
+  if (!github.accessToken) {
+    throw new Error('No GitHub access token found. Please reconnect GitHub.')
   }
 
   return new Octokit({
@@ -173,9 +189,17 @@ export async function createRepository(options: {
       license_template: options.licenseTemplate,
     })
     return { data, error: null }
-  } catch (error) {
-    console.error('[CREATE_GITHUB_REPO]', error)
-    return { data: null, error: 'Failed to create repository' }
+  } catch (error: any) {
+    console.error('[CREATE_GITHUB_REPO]', error?.status, error?.message, error?.response?.data)
+    const msg =
+      error?.status === 422
+        ? 'Repository name already exists or is invalid'
+        : error?.status === 403
+          ? 'Insufficient permissions. Make sure your GitHub connection has repo scope.'
+          : error?.status === 401
+            ? 'GitHub token expired. Please reconnect GitHub from Connections.'
+            : `Failed to create repository: ${error?.message || 'Unknown error'}`
+    return { data: null, error: msg }
   }
 }
 

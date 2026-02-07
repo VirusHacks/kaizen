@@ -1,0 +1,25 @@
+{
+  "name": "commando-ai-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Commando-AI - connect your IDE assistant to your project management",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "generate": "prisma generate --schema=../prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "@prisma/client": "^6.4.1",
+    "@google/genai": "^1.40.0",
+    "zod": "^3.23.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.4.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}

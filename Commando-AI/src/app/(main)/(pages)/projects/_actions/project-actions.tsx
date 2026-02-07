@@ -52,10 +52,24 @@ export const getUserProjects = async () => {
   }
 
   try {
+    // Fetch projects where user is owner OR a member
     const projects = await db.project.findMany({
       where: {
-        ownerId: user.id,
-        isArchived: false,
+        AND: [
+          { isArchived: false },
+          {
+            OR: [
+              { ownerId: user.id },
+              {
+                members: {
+                  some: {
+                    userId: user.id,
+                  },
+                },
+              },
+            ],
+          },
+        ],
       },
       orderBy: {
         createdAt: 'desc',
@@ -79,10 +93,24 @@ export const getArchivedProjects = async () => {
   }
 
   try {
+    // Fetch archived projects where user is owner OR a member
     const projects = await db.project.findMany({
       where: {
-        ownerId: user.id,
-        isArchived: true,
+        AND: [
+          { isArchived: true },
+          {
+            OR: [
+              { ownerId: user.id },
+              {
+                members: {
+                  some: {
+                    userId: user.id,
+                  },
+                },
+              },
+            ],
+          },
+        ],
       },
       orderBy: {
         updatedAt: 'desc',
@@ -210,41 +238,50 @@ export const createProject = async (
     let repoUrl: string | undefined
     let repoName: string | undefined
     let repoOwner: string | undefined
+    let githubError: string | undefined
 
     if (githubOption === 'create' && githubRepoName) {
-      try {
-        const result = await createRepository({
-          name: githubRepoName,
-          description: description || `Project: ${name}`,
-          isPrivate: githubRepoVisibility === 'private',
-          autoInit: true,
-        })
+      // Verify GitHub is connected before attempting repo creation
+      const isConnected = await checkGitHubConnection()
+      if (!isConnected) {
+        return { error: 'GitHub is not connected. Please connect GitHub from the Connections page first.', data: null }
+      }
 
-        if (result.data) {
-          repoUrl = result.data.html_url
-          repoName = result.data.name
-          repoOwner = result.data.owner.login
-        } else {
-          console.warn('[CREATE_PROJECT] GitHub repo creation failed, continuing without repo:', result.error)
-        }
-      } catch (err) {
-        console.warn('[CREATE_PROJECT] GitHub repo creation error, continuing without repo:', err)
+      const result = await createRepository({
+        name: githubRepoName,
+        description: description || `Project: ${name}`,
+        isPrivate: githubRepoVisibility === 'private',
+        autoInit: true,
+      })
+
+      if (result.data) {
+        repoUrl = result.data.html_url
+        repoName = result.data.name
+        repoOwner = result.data.owner.login
+      } else {
+        githubError = result.error || 'Failed to create GitHub repository'
+        console.error('[CREATE_PROJECT] GitHub repo creation failed:', githubError)
+        // Return error — don't create a project without the requested repo
+        return { error: `GitHub repo creation failed: ${githubError}`, data: null }
       }
     } else if (githubOption === 'connect' && githubRepoUrl) {
       const parsed = parseGitHubUrl(githubRepoUrl)
-      if (parsed) {
-        try {
-          const result = await getRepository(parsed.owner, parsed.repo)
-          if (result.data) {
-            repoUrl = result.data.html_url
-            repoName = result.data.name
-            repoOwner = result.data.owner.login
-          } else {
-            console.warn('[CREATE_PROJECT] Could not access GitHub repo, continuing without:', result.error)
-          }
-        } catch (err) {
-          console.warn('[CREATE_PROJECT] GitHub repo access error, continuing without repo:', err)
-        }
+      if (!parsed) {
+        return { error: 'Invalid GitHub URL. Use format: https://github.com/owner/repo', data: null }
+      }
+
+      const isConnected = await checkGitHubConnection()
+      if (!isConnected) {
+        return { error: 'GitHub is not connected. Please connect GitHub from the Connections page first.', data: null }
+      }
+
+      const result = await getRepository(parsed.owner, parsed.repo)
+      if (result.data) {
+        repoUrl = result.data.html_url
+        repoName = result.data.name
+        repoOwner = result.data.owner.login
+      } else {
+        return { error: `Cannot access repository: ${result.error}. Make sure you have access to this repo.`, data: null }
       }
     }
 
