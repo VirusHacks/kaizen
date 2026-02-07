@@ -29,10 +29,10 @@ const CustomModal = ({ children, subheading, title, defaultOpen }: Props) => {
       open={isOpen}
       onClose={handleClose}
     >
-      <DrawerContent>
+      <DrawerContent className="max-h-[95vh]">
         <DrawerHeader>
           <DrawerTitle className="text-center">{title}</DrawerTitle>
-          <DrawerDescription className="text-center flex flex-col items-center gap-4 h-96 overflow-scroll">
+          <DrawerDescription className="text-center flex flex-col items-center gap-4 max-h-[80vh] overflow-y-auto px-4">
             {subheading}
             {children}
           </DrawerDescription>

@@ -7,7 +7,6 @@ import { z } from 'zod'
 import { ProjectFormSchema } from '@/lib/types'
 import { createDefaultWorkflow } from '../[projectId]/project-manager/settings/workflow/_actions/workflow-actions'
 import { createRepository, getRepository } from '../../_actions/github-api'
-import { getGitHubConnection } from '../../connections/_actions/github-connection'
 
 /**
  * Ensures the current Clerk user exists in our database.
@@ -126,13 +125,27 @@ export const getProjectById = async (projectId: string) => {
 }
 
 /**
- * Check if GitHub is connected for the current user
+ * Check if GitHub is connected for the current user.
+ * Checks both the Connections row AND the related GitHub record
+ * to stay consistent with the connections page.
  */
 export const checkGitHubConnection = async () => {
   const { userId } = await auth()
   if (!userId) return false
-  const connection = await getGitHubConnection(userId)
-  return !!connection
+
+  // Check for a GitHub connection row linked to this user WITH a valid GitHub record
+  const connection = await db.connections.findFirst({
+    where: {
+      type: 'GitHub',
+      userId: userId,
+    },
+    include: {
+      GitHub: true,
+    },
+  })
+
+  // Only consider connected if the GitHub record actually exists with an access token
+  return !!(connection?.GitHub?.accessToken)
 }
 
 /**
@@ -199,35 +212,40 @@ export const createProject = async (
     let repoOwner: string | undefined
 
     if (githubOption === 'create' && githubRepoName) {
-      const result = await createRepository({
-        name: githubRepoName,
-        description: description || `Project: ${name}`,
-        isPrivate: githubRepoVisibility === 'private',
-        autoInit: true,
-      })
+      try {
+        const result = await createRepository({
+          name: githubRepoName,
+          description: description || `Project: ${name}`,
+          isPrivate: githubRepoVisibility === 'private',
+          autoInit: true,
+        })
 
-      if (result.error || !result.data) {
-        return { error: result.error || 'Failed to create GitHub repo', data: null }
+        if (result.data) {
+          repoUrl = result.data.html_url
+          repoName = result.data.name
+          repoOwner = result.data.owner.login
+        } else {
+          console.warn('[CREATE_PROJECT] GitHub repo creation failed, continuing without repo:', result.error)
+        }
+      } catch (err) {
+        console.warn('[CREATE_PROJECT] GitHub repo creation error, continuing without repo:', err)
       }
-
-      repoUrl = result.data.html_url
-      repoName = result.data.name
-      repoOwner = result.data.owner.login
     } else if (githubOption === 'connect' && githubRepoUrl) {
       const parsed = parseGitHubUrl(githubRepoUrl)
-      if (!parsed) {
-        return { error: 'Invalid GitHub repository URL', data: null }
+      if (parsed) {
+        try {
+          const result = await getRepository(parsed.owner, parsed.repo)
+          if (result.data) {
+            repoUrl = result.data.html_url
+            repoName = result.data.name
+            repoOwner = result.data.owner.login
+          } else {
+            console.warn('[CREATE_PROJECT] Could not access GitHub repo, continuing without:', result.error)
+          }
+        } catch (err) {
+          console.warn('[CREATE_PROJECT] GitHub repo access error, continuing without repo:', err)
+        }
       }
-
-      // Verify repo is accessible
-      const result = await getRepository(parsed.owner, parsed.repo)
-      if (result.error || !result.data) {
-        return { error: 'Could not access the repository. Make sure it exists and you have access.', data: null }
-      }
-
-      repoUrl = result.data.html_url
-      repoName = result.data.name
-      repoOwner = result.data.owner.login
     }
 
     // Create project + setup + membership in a transaction

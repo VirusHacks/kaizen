@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FolderKanban, Calendar, ArrowLeft, ListTodo, Plus, LayoutGrid, Layers, GitBranch, Settings, Users, CalendarDays, LayoutDashboard } from 'lucide-react'
 import Link from 'next/link'
+import PMAssistantChat from '@/components/pm-assistant-chat'
 
 type Props = {
   params: { projectId: string }
@@ -220,6 +221,9 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </div>
         </div>
       </div>
+
+      {/* AI PM Assistant */}
+      <PMAssistantChat projectId={params.projectId} projectName={project.name} />
     </div>
   )
 }

@@ -144,7 +144,7 @@ const ProjectForm = ({ subTitle, title, defaultValues, mode = 'create', isGitHub
   }
 
   return (
-    <Card className="w-full max-w-[700px] border-none max-h-[80vh] overflow-y-auto">
+    <Card className="w-full max-w-[900px] border-none">
       {title && subTitle && (
         <CardHeader>
           <CardTitle>{title}</CardTitle>
