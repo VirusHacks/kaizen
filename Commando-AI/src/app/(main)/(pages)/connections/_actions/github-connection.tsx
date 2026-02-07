@@ -40,7 +40,9 @@ const ensureUserInDb = async () => {
 export const onGitHubConnect = async (
   accessToken: string,
   username: string,
-  userId: string
+  userId: string,
+  installationId?: number,
+  appSlug?: string
 ) => {
   if (accessToken) {
     try {
@@ -66,6 +68,8 @@ export const onGitHubConnect = async (
           data: {
             accessToken,
             username,
+            ...(installationId ? { installationId } : {}),
+            ...(appSlug ? { appSlug } : {}),
           },
         })
 
@@ -78,6 +82,8 @@ export const onGitHubConnect = async (
           accessToken,
           username,
           userId,
+          installationId: installationId || null,
+          appSlug: appSlug || null,
         },
       })
 

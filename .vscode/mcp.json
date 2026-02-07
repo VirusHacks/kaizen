@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "commando-ai": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["C:/Users/daksh/OneDrive/Desktop/Hackathons/Kaizen/Commando-AI/mcp-server/dist/index.js"]
+    }
+  }
+}
