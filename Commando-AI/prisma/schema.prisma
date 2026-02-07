@@ -181,9 +181,10 @@ model ProjectMember {
   user   User   @relation(fields: [userId], references: [clerkId])
   userId String
 
-  @@unique([projectId, userId])
+  @@unique([projectId, memberId])
   @@index([projectId])
   @@index([userId])
+  @@index([memberId])
 }
 
 // Issue Management Enums

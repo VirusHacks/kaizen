@@ -5,7 +5,7 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { ProjectFormSchema } from '@/lib/types'
-import { createDefaultWorkflow } from '../[projectId]/settings/workflow/_actions/workflow-actions'
+import { createDefaultWorkflow } from '../[projectId]/project-manager/settings/workflow/_actions/workflow-actions'
 
 /**
  * Ensures the current Clerk user exists in our database.

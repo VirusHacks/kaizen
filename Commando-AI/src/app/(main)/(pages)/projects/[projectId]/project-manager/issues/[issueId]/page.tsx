@@ -97,7 +97,7 @@ const IssueDetailPage = async ({ params }: Props) => {
       <div className="sticky top-0 z-[10] p-6 bg-background/50 backdrop-blur-lg border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/projects/${params.projectId}/issues`}>
+            <Link href={`/projects/${params.projectId}/project-manager/issues`}>
               <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -146,7 +146,7 @@ const IssueDetailPage = async ({ params }: Props) => {
                 {issue.children.map((subtask) => (
                   <Link
                     key={subtask.id}
-                    href={`/projects/${params.projectId}/issues/${subtask.id}`}
+                    href={`/projects/${params.projectId}/project-manager/issues/${subtask.id}`}
                     className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 transition-colors"
                   >
                     <Layers className="h-4 w-4 text-gray-500" />
@@ -173,7 +173,7 @@ const IssueDetailPage = async ({ params }: Props) => {
             <div className="rounded-lg border p-6">
               <h2 className="text-lg font-semibold mb-4">Parent Issue</h2>
               <Link
-                href={`/projects/${params.projectId}/issues/${issue.parent.id}`}
+                href={`/projects/${params.projectId}/project-manager/issues/${issue.parent.id}`}
                 className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 transition-colors"
               >
                 <span className="font-mono text-sm text-muted-foreground">

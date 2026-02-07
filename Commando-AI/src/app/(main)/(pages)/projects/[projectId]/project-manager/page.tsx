@@ -1,5 +1,5 @@
 import React from 'react'
-import { getProjectById } from '../_actions/project-actions'
+import { getProjectById } from '../../_actions/project-actions'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -54,7 +54,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Link
-            href={`/projects/${params.projectId}/dashboard`}
+            href={`/projects/${params.projectId}/project-manager/dashboard`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group bg-primary/5"
           >
             <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </Link>
 
           <Link
-            href={`/projects/${params.projectId}/issues`}
+            href={`/projects/${params.projectId}/project-manager/issues`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </Link>
 
           <Link
-            href={`/projects/${params.projectId}/issues/new`}
+            href={`/projects/${params.projectId}/project-manager/issues/new`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </Link>
 
           <Link
-            href={`/projects/${params.projectId}/board`}
+            href={`/projects/${params.projectId}/project-manager/board`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </Link>
 
           <Link
-            href={`/projects/${params.projectId}/backlog`}
+            href={`/projects/${params.projectId}/project-manager/backlog`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -139,7 +139,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </Link>
 
           <Link
-            href={`/projects/${params.projectId}/settings/workflow`}
+            href={`/projects/${params.projectId}/project-manager/settings/workflow`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -156,7 +156,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </Link>
 
           <Link
-            href={`/projects/${params.projectId}/timeline`}
+            href={`/projects/${params.projectId}/project-manager/timeline`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
           >
             <div className="flex items-center gap-3">
@@ -173,7 +173,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
           </Link>
 
           <Link
-            href={`/projects/${params.projectId}/settings/team`}
+            href={`/projects/${params.projectId}/project-manager/settings/team`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
           >
             <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { currentUser } from '@clerk/nextjs'
+import { currentUser } from '@clerk/nextjs/server'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 
@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
     const projectMember = await db.projectMember.findFirst({
       where: {
         projectId,
-        userId: user.id,
         memberId,
       },
       include: {
@@ -58,15 +57,25 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Update the department role for this member
-    await db.projectMember.update({
-      where: {
-        id: projectMember.id,
-      },
-      data: {
-        departmentRole,
-      },
-    })
+    // Enforce department role if it is already set
+    if (projectMember.departmentRole && projectMember.departmentRole !== departmentRole) {
+      return NextResponse.json(
+        { error: 'Role does not match member credentials' },
+        { status: 403 }
+      )
+    }
+
+    // Set department role if it was not assigned yet
+    if (!projectMember.departmentRole) {
+      await db.projectMember.update({
+        where: {
+          id: projectMember.id,
+        },
+        data: {
+          departmentRole,
+        },
+      })
+    }
 
     // Set cookie for project access
     const cookieStore = await cookies()

@@ -35,7 +35,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import BacklogIssueCard from './backlog-issue-card'
-import { deleteSprint } from '../../../sprints/_actions/sprint-actions'
+import { deleteSprint } from '../../sprints/_actions/sprint-actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import SprintForm from './sprint-form'

@@ -22,7 +22,7 @@ const NewIssuePage = async ({ params }: Props) => {
     <div className="flex flex-col relative">
       <div className="sticky top-0 z-[10] p-6 bg-background/50 backdrop-blur-lg border-b">
         <div className="flex items-center gap-4">
-          <Link href={`/projects/${params.projectId}/issues`}>
+          <Link href={`/projects/${params.projectId}/project-manager/issues`}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>

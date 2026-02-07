@@ -31,9 +31,10 @@ const getUserProjectRole = async (
   if (project) return 'OWNER'
 
   // Check project membership
-  const membership = await db.projectMember.findUnique({
+  const membership = await db.projectMember.findFirst({
     where: {
-      projectId_userId: { projectId, userId },
+      projectId,
+      userId,
     },
   })
 
@@ -185,9 +186,10 @@ export const inviteProjectMember = async (
     }
 
     // Check if already a member
-    const existingMember = await db.projectMember.findUnique({
+    const existingMember = await db.projectMember.findFirst({
       where: {
-        projectId_userId: { projectId, userId: invitedUser.clerkId },
+        projectId,
+        userId: invitedUser.clerkId,
       },
     })
     if (existingMember) {
