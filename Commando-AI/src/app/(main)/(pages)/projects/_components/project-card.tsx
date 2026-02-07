@@ -81,7 +81,7 @@ const ProjectCard = ({ id, name, projectKey, description, isArchived, createdAt 
     setOpen(
       <CustomModal
         title="Access Project"
-        subheading="Select your role and enter credentials to access this project."
+        subheading="Verifying your role and granting access..."
       >
         <ProjectRoleSelectForm projectId={id} />
       </CustomModal>

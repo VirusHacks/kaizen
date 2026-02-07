@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { currentUser } from '@clerk/nextjs/server'
-import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 
 export async function POST(req: NextRequest) {
@@ -14,20 +13,20 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { projectId, memberId, password, departmentRole } = await req.json()
+    const { projectId } = await req.json()
 
-    if (!projectId || !memberId || !password || !departmentRole) {
+    if (!projectId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing project ID' },
         { status: 400 }
       )
     }
 
-    // Find the project member with matching memberId
+    // Look up the user's membership in this project by their Clerk ID
     const projectMember = await db.projectMember.findFirst({
       where: {
         projectId,
-        memberId,
+        userId: user.id,
       },
       include: {
         project: true,
@@ -35,53 +34,51 @@ export async function POST(req: NextRequest) {
     })
 
     if (!projectMember) {
-      return NextResponse.json(
-        { error: 'Invalid member ID or access denied' },
-        { status: 403 }
-      )
-    }
-
-    // Verify password
-    if (!projectMember.password) {
-      return NextResponse.json(
-        { error: 'No password set for this member' },
-        { status: 403 }
-      )
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, projectMember.password)
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 403 }
-      )
-    }
-
-    // Enforce department role if it is already set
-    if (projectMember.departmentRole && projectMember.departmentRole !== departmentRole) {
-      return NextResponse.json(
-        { error: 'Role does not match member credentials' },
-        { status: 403 }
-      )
-    }
-
-    // Set department role if it was not assigned yet
-    if (!projectMember.departmentRole) {
-      await db.projectMember.update({
+      // Also check if the user is the project owner
+      const project = await db.project.findFirst({
         where: {
-          id: projectMember.id,
-        },
-        data: {
-          departmentRole,
+          id: projectId,
+          ownerId: user.id,
         },
       })
+
+      if (project) {
+        // Owner without a membership row — default to PROJECT_MANAGER
+        const role = 'PROJECT_MANAGER'
+
+        const cookieStore = await cookies()
+        cookieStore.set(
+          `project_role_${projectId}`,
+          role,
+          {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24 * 7,
+            path: '/',
+          }
+        )
+
+        return NextResponse.json({
+          success: true,
+          message: 'Access granted',
+          role,
+        })
+      }
+
+      return NextResponse.json(
+        { error: 'You are not a member of this project' },
+        { status: 403 }
+      )
     }
+
+    const role = projectMember.departmentRole || 'PROJECT_MANAGER'
 
     // Set cookie for project access
     const cookieStore = await cookies()
     cookieStore.set(
       `project_role_${projectId}`,
-      departmentRole,
+      role,
       {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -94,7 +91,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Access granted',
-      role: departmentRole,
+      role,
     })
   } catch (error) {
     console.error('Project access error:', error)

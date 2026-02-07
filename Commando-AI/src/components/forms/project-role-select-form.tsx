@@ -1,54 +1,17 @@
 'use client'
 
-import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
+import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Loader2, User, Lock, Briefcase } from 'lucide-react'
+import { Loader2, ShieldCheck, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useModal } from '@/providers/modal-provider'
-
-const formSchema = z.object({
-  memberId: z.string().min(1, 'Member ID is required'),
-  password: z.string().min(1, 'Password is required'),
-  departmentRole: z.enum([
-    'DEVELOPER',
-    'QA_TESTER',
-    'FINANCE',
-    'SALES',
-    'EXECUTIVE',
-    'PROJECT_MANAGER',
-  ], {
-    required_error: 'Please select a role',
-  }),
-})
-
-type FormValues = z.infer<typeof formSchema>
 
 type Props = {
   projectId: string
 }
 
-const ROLE_LABELS = {
+const ROLE_LABELS: Record<string, string> = {
   DEVELOPER: 'Developer',
   QA_TESTER: 'QA Tester',
   FINANCE: 'Finance',
@@ -57,7 +20,7 @@ const ROLE_LABELS = {
   PROJECT_MANAGER: 'Project Manager',
 }
 
-const ROLE_ROUTES = {
+const ROLE_ROUTES: Record<string, string> = {
   DEVELOPER: 'developer',
   QA_TESTER: 'qa-tester',
   FINANCE: 'finance',
@@ -67,168 +30,107 @@ const ROLE_ROUTES = {
 }
 
 const ProjectRoleSelectForm = ({ projectId }: Props) => {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [memberRole, setMemberRole] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const { setClose } = useModal()
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      memberId: '',
-      password: '',
-      departmentRole: undefined,
-    },
-  })
+  // Auto-lookup the user's role on mount
+  useEffect(() => {
+    const lookupRole = async () => {
+      try {
+        const response = await fetch('/api/projects/access', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId }),
+        })
 
-  const onSubmit = async (values: FormValues) => {
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/projects/access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          memberId: values.memberId,
-          password: values.password,
-          departmentRole: values.departmentRole,
-        }),
-      })
+        const result = await response.json()
 
-      const result = await response.json()
+        if (!response.ok) {
+          setError(result.error || 'You do not have access to this project')
+          setIsLoading(false)
+          return
+        }
 
-      if (!response.ok) {
-        toast.error(result.error || 'Access denied')
-        return
+        setMemberRole(result.role)
+        setIsLoading(false)
+      } catch (err) {
+        console.error('Error looking up role:', err)
+        setError('Failed to check project access')
+        setIsLoading(false)
       }
-
-      toast.success('Access granted! Redirecting...')
-      setClose()
-
-      // Navigate to the appropriate role dashboard
-      const roleRoute = ROLE_ROUTES[values.departmentRole]
-      router.push(`/projects/${projectId}/${roleRoute}`)
-    } catch (error) {
-      console.error('Error accessing project:', error)
-      toast.error('Failed to access project')
-    } finally {
-      setIsLoading(false)
     }
+
+    lookupRole()
+  }, [projectId])
+
+  const handleAccess = () => {
+    if (!memberRole) return
+    const roleRoute = ROLE_ROUTES[memberRole]
+    if (!roleRoute) {
+      toast.error('Unknown role')
+      return
+    }
+    toast.success('Access granted! Redirecting...')
+    setClose()
+    router.push(`/projects/${projectId}/${roleRoute}`)
   }
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Checking your access...</p>
+      </div>
+    )
+  }
+
+  // Error / no access
+  if (error) {
+    return (
+      <div className="flex flex-col items-center py-6 gap-4">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+        <Button variant="outline" onClick={() => setClose()}>
+          Close
+        </Button>
+      </div>
+    )
+  }
+
+  // Role found — show confirmation and enter
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="memberId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Member ID</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Enter your member ID"
-                      className="pl-10"
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Your unique project member identifier
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="password"
-                      placeholder="Enter your password"
-                      className="pl-10"
-                      {...field}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Your project access password
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="departmentRole"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Department Role</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={isLoading}
-                >
-                  <FormControl>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
-                      <SelectTrigger className="pl-10">
-                        <SelectValue placeholder="Select your role" />
-                      </SelectTrigger>
-                    </div>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.entries(ROLE_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Choose the role you want to access this project as
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setClose()}
-            disabled={isLoading}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isLoading} className="flex-1">
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              'Access Project'
-            )}
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <div className="flex flex-col items-center py-6 gap-5">
+      <div className="flex items-center gap-2 text-green-500">
+        <ShieldCheck className="h-6 w-6" />
+        <p className="text-sm font-medium">Access verified</p>
+      </div>
+      <div className="text-center space-y-1">
+        <p className="text-lg font-semibold">
+          {ROLE_LABELS[memberRole!] || memberRole}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Your assigned role for this project
+        </p>
+      </div>
+      <div className="flex gap-3 w-full">
+        <Button
+          variant="outline"
+          onClick={() => setClose()}
+          className="flex-1"
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleAccess} className="flex-1">
+          Open Project
+        </Button>
+      </div>
+    </div>
   )
 }
 
