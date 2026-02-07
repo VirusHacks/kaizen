@@ -3,7 +3,7 @@ import { getProjectById } from '../../_actions/project-actions'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { FolderKanban, Calendar, ArrowLeft, ListTodo, Plus, LayoutGrid, Layers, GitBranch, Settings, Users, CalendarDays, LayoutDashboard } from 'lucide-react'
+import { FolderKanban, Calendar, ArrowLeft, ListTodo, Plus, LayoutGrid, Layers, GitBranch, Settings, Users, CalendarDays, LayoutDashboard, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import PMAssistantChat from '@/components/pm-assistant-chat'
 
@@ -185,6 +185,23 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <p className="font-medium">Team</p>
                 <p className="text-sm text-muted-foreground">
                   Manage members
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href={`/projects/${params.projectId}/project-manager/resource-planning`}
+            className="rounded-lg border p-4 hover:border-primary/50 transition-colors group bg-gradient-to-br from-amber-500/5 to-orange-500/5 border-amber-500/20"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
+                <Sparkles className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="font-medium">Resource Planning</p>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered allocation
                 </p>
               </div>
             </div>
