@@ -1,25 +1,61 @@
-import React from 'react'
-import { getProjectById } from '../../_actions/project-actions'
-import { notFound } from 'next/navigation'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { FolderKanban, Calendar, ArrowLeft, ListTodo, Plus, LayoutGrid, Layers, GitBranch, Settings, Users, CalendarDays, LayoutDashboard } from 'lucide-react'
-import Link from 'next/link'
-import PMAssistantChat from '@/components/pm-assistant-chat'
+import React, { Suspense } from 'react';
+import {
+  Loader2,
+  LayoutDashboard,
+  ArrowLeft,
+  ListTodo,
+  Plus,
+  LayoutGrid,
+  Layers,
+  GitBranch,
+  Users,
+  CalendarDays,
+} from 'lucide-react';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { getProjectDashboardData } from './dashboard/_actions/dashboard-actions';
+import DashboardClient from './dashboard/_components/dashboard-client';
+import PMAssistantChat from '@/components/pm-assistant-chat';
+import { Badge } from '@/components/ui/badge';
 
 type Props = {
-  params: { projectId: string }
-}
+  params: { projectId: string };
+};
 
-const ProjectDetailPage = async ({ params }: Props) => {
-  const { data: project, error } = await getProjectById(params.projectId)
+const DashboardContent = async ({ projectId }: { projectId: string }) => {
+  const result = await getProjectDashboardData(projectId);
 
-  if (error || !project) {
-    notFound()
+  if (result.error || !result.data) {
+    if (result.error === 'Project not found or access denied') {
+      notFound();
+    }
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        Failed to load dashboard: {result.error}
+      </div>
+    );
   }
 
   return (
+    <>
+      <DashboardClient data={result.data} />
+      <PMAssistantChat
+        projectId={projectId}
+        projectName={result.data.project.name}
+      />
+    </>
+  );
+};
+
+const ProjectDetailPage = async ({ params }: Props) => {
+  // Get basic project info for the header
+  const result = await getProjectDashboardData(params.projectId);
+  const project = result.data?.project;
+
+  return (
     <div className="flex flex-col relative">
+      {/* Header */}
       <div className="sticky top-0 z-[10] p-6 bg-background/50 backdrop-blur-lg border-b">
         <div className="flex items-center gap-4">
           <Link href="/projects">
@@ -28,49 +64,40 @@ const ProjectDetailPage = async ({ params }: Props) => {
             </Button>
           </Link>
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-              <FolderKanban className="h-6 w-6 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <LayoutDashboard className="h-5 w-5 text-primary" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">{project.name}</h1>
-                <Badge variant="secondary" className="font-mono text-sm">
-                  {project.key}
-                </Badge>
-                {project.isArchived && (
-                  <Badge variant="outline" className="text-muted-foreground">
+                <h1 className="text-xl font-semibold">
+                  {project?.name || 'Project Dashboard'}
+                </h1>
+                {project?.key && (
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {project.key}
+                  </Badge>
+                )}
+                {project?.isArchived && (
+                  <Badge
+                    variant="outline"
+                    className="text-muted-foreground text-xs"
+                  >
                     Archived
                   </Badge>
                 )}
               </div>
-              <p className="text-muted-foreground text-sm">
-                {project.description || 'No description'}
+              <p className="text-sm text-muted-foreground">
+                {project?.description ||
+                  'Overview of project progress and activity'}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
-        {/* Quick Actions */}
+      {/* Quick Actions */}
+      <div className="p-6 pb-0">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href={`/projects/${params.projectId}/project-manager/dashboard`}
-            className="rounded-lg border p-4 hover:border-primary/50 transition-colors group bg-primary/5"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 group-hover:bg-primary/30 transition-colors">
-                <LayoutDashboard className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Dashboard</p>
-                <p className="text-sm text-muted-foreground">
-                  Project overview
-                </p>
-              </div>
-            </div>
-          </Link>
-
           <Link
             href={`/projects/${params.projectId}/project-manager/issues`}
             className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
@@ -183,49 +210,25 @@ const ProjectDetailPage = async ({ params }: Props) => {
               </div>
               <div>
                 <p className="font-medium">Team</p>
-                <p className="text-sm text-muted-foreground">
-                  Manage members
-                </p>
+                <p className="text-sm text-muted-foreground">Manage members</p>
               </div>
             </div>
           </Link>
         </div>
-
-        {/* Project Info Card */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Calendar className="h-4 w-4" />
-              Created
-            </div>
-            <p className="font-medium">
-              {new Date(project.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-          </div>
-          <div className="rounded-lg border p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Calendar className="h-4 w-4" />
-              Last Updated
-            </div>
-            <p className="font-medium">
-              {new Date(project.updatedAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-          </div>
-        </div>
       </div>
 
-      {/* AI PM Assistant */}
-      <PMAssistantChat projectId={params.projectId} projectName={project.name} />
+      {/* Dashboard Content */}
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center flex-1 py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        }
+      >
+        <DashboardContent projectId={params.projectId} />
+      </Suspense>
     </div>
-  )
-}
+  );
+};
 
-export default ProjectDetailPage
+export default ProjectDetailPage;

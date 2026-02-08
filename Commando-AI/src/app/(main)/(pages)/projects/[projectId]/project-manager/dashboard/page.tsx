@@ -1,31 +1,31 @@
-import React, { Suspense } from 'react'
-import { Loader2, LayoutDashboard, ArrowLeft } from 'lucide-react'
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { getProjectDashboardData } from './_actions/dashboard-actions'
-import DashboardClient from './_components/dashboard-client'
+import React, { Suspense } from 'react';
+import { Loader2, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { getProjectDashboardData } from './_actions/dashboard-actions';
+import DashboardClient from './_components/dashboard-client';
 
 type Props = {
-  params: { projectId: string }
-}
+  params: { projectId: string };
+};
 
 const DashboardContent = async ({ projectId }: { projectId: string }) => {
-  const result = await getProjectDashboardData(projectId)
+  const result = await getProjectDashboardData(projectId);
 
   if (result.error || !result.data) {
     if (result.error === 'Project not found or access denied') {
-      notFound()
+      notFound();
     }
     return (
       <div className="p-6 text-center text-muted-foreground">
         Failed to load dashboard: {result.error}
       </div>
-    )
+    );
   }
 
-  return <DashboardClient data={result.data} />
-}
+  return <DashboardClient data={result.data} />;
+};
 
 const ProjectDashboardPage = async ({ params }: Props) => {
   return (
@@ -63,7 +63,7 @@ const ProjectDashboardPage = async ({ params }: Props) => {
         <DashboardContent projectId={params.projectId} />
       </Suspense>
     </div>
-  )
-}
+  );
+};
 
-export default ProjectDashboardPage
+export default ProjectDashboardPage;

@@ -11,6 +11,7 @@ import BoardPreviewCard from './board-preview-card'
 import TimelinePreviewCard from './timeline-preview-card'
 import ActivityFeedCard from './activity-feed-card'
 import AIProjectDashboardCard from './ai-project-dashboard-card'
+import AIFeaturesCard from './ai-features-card'
 
 type Props = {
   data: DashboardData
@@ -33,6 +34,9 @@ const DashboardClient = ({ data }: Props) => {
           projectName={data.project.name}
         />
       </div>
+
+      {/* AI Features Section */}
+      <AIFeaturesCard projectId={data.project.id} />
 
       {/* Row 2: Issue Stats + Active Sprint */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

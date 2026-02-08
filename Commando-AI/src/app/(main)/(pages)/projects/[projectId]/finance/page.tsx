@@ -1,13 +1,27 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { getProjectById } from '../../_actions/project-actions'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { DollarSign, ArrowLeft, FolderKanban } from 'lucide-react'
+import { DollarSign, ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { getResourcePlanningData } from '../project-manager/resource-planning/_actions/resource-actions'
+import FinanceDashboardClient from './_components/finance-dashboard-client'
 
 type Props = {
   params: { projectId: string }
+}
+
+const FinanceDashboardContent = async ({ projectId }: { projectId: string }) => {
+  const result = await getResourcePlanningData(projectId)
+  if (result.error || !result.data) {
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        No resource planning data available yet.
+      </div>
+    )
+  }
+  return <FinanceDashboardClient data={result.data} />
 }
 
 const FinanceDashboard = async ({ params }: Props) => {
@@ -32,30 +46,28 @@ const FinanceDashboard = async ({ params }: Props) => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Finance Dashboard</h1>
+                <h1 className="text-2xl font-bold">Finance & HR Dashboard</h1>
                 <Badge variant="secondary" className="font-mono text-sm">
                   {project.key}
                 </Badge>
               </div>
               <p className="text-muted-foreground text-sm">
-                {project.name}
+                {project.name} — Cost efficiency & burnout risk monitoring
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <FolderKanban className="h-16 w-16 text-muted-foreground/50" />
-          <h2 className="text-2xl font-semibold">Finance Dashboard</h2>
-          <p className="text-muted-foreground text-center max-w-md">
-            Welcome to the Finance Dashboard. This view is customized for financial management,
-            budget tracking, and resource allocation.
-          </p>
-          <Badge variant="outline" className="mt-4">Coming Soon</Badge>
-        </div>
-      </div>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center flex-1 py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        }
+      >
+        <FinanceDashboardContent projectId={params.projectId} />
+      </Suspense>
     </div>
   )
 }

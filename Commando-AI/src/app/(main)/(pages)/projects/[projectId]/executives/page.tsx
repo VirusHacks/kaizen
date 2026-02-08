@@ -1,13 +1,27 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { getProjectById } from '../../_actions/project-actions'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Crown, ArrowLeft, FolderKanban } from 'lucide-react'
+import { Crown, ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { getResourcePlanningData } from '../project-manager/resource-planning/_actions/resource-actions'
+import ExecutiveDashboardClient from './_components/executive-dashboard-client'
 
 type Props = {
   params: { projectId: string }
+}
+
+const ExecutiveDashboardContent = async ({ projectId }: { projectId: string }) => {
+  const result = await getResourcePlanningData(projectId)
+  if (result.error || !result.data) {
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        No resource planning data available yet.
+      </div>
+    )
+  }
+  return <ExecutiveDashboardClient data={result.data} />
 }
 
 const ExecutiveDashboard = async ({ params }: Props) => {
@@ -38,24 +52,22 @@ const ExecutiveDashboard = async ({ params }: Props) => {
                 </Badge>
               </div>
               <p className="text-muted-foreground text-sm">
-                {project.name}
+                {project.name} — High-level delivery intelligence & resource insights
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <FolderKanban className="h-16 w-16 text-muted-foreground/50" />
-          <h2 className="text-2xl font-semibold">Executive Dashboard</h2>
-          <p className="text-muted-foreground text-center max-w-md">
-            Welcome to the Executive Dashboard. This view provides high-level insights,
-            strategic metrics, and overall project performance for decision makers.
-          </p>
-          <Badge variant="outline" className="mt-4">Coming Soon</Badge>
-        </div>
-      </div>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center flex-1 py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        }
+      >
+        <ExecutiveDashboardContent projectId={params.projectId} />
+      </Suspense>
     </div>
   )
 }
