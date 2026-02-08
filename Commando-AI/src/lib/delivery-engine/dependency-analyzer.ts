@@ -11,9 +11,7 @@
  * - Bottleneck detection
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db } from '@/lib/db';
 
 interface DependencyNode {
   issueId: string;
@@ -47,7 +45,7 @@ interface AffectedIssue {
  * Build dependency graph for a project
  */
 async function buildDependencyGraph(projectId: string): Promise<Map<string, DependencyNode>> {
-  const issues = await prisma.issue.findMany({
+  const issues = await db.issue.findMany({
     where: { projectId },
     include: {
       assignee: true,
@@ -342,7 +340,7 @@ export async function saveDependencyChain(
   projectId: string,
   impact: DependencyImpact
 ): Promise<string> {
-  const chain = await prisma.dependencyChain.create({
+  const chain = await db.dependencyChain.create({
     data: {
       projectId,
       rootIssueId: impact.rootIssueId,
@@ -367,7 +365,7 @@ export async function saveDependencyChain(
  * Get all dependency chains for a project
  */
 export async function getDependencyChains(projectId: string) {
-  return prisma.dependencyChain.findMany({
+  return db.dependencyChain.findMany({
     where: { projectId },
     orderBy: { riskScore: 'desc' },
   });

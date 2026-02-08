@@ -11,9 +11,7 @@
  * 4. Returns percentile outcomes
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { db } from '@/lib/db';
 
 interface VelocityDistribution {
   mean: number;
@@ -59,7 +57,7 @@ export interface MonteCarloResult {
  * Load historical velocity data from completed sprints
  */
 async function loadHistoricalVelocity(projectId: string): Promise<VelocityDistribution> {
-  const snapshots = await prisma.velocitySnapshot.findMany({
+  const snapshots = await db.velocitySnapshot.findMany({
     where: { projectId },
     orderBy: { weekStart: 'desc' },
     take: 12, // Last 12 weeks/sprints
@@ -94,7 +92,7 @@ async function loadHistoricalVelocity(projectId: string): Promise<VelocityDistri
  * Calculate current team capacity
  */
 async function calculateTeamCapacity(projectId: string): Promise<TeamCapacity> {
-  const allocations = await prisma.resourceAllocation.findMany({
+  const allocations = await db.resourceAllocation.findMany({
     where: { projectId },
   });
 
@@ -279,7 +277,7 @@ export async function savePrediction(
   input: MonteCarloInput,
   result: MonteCarloResult
 ): Promise<string> {
-  const prediction = await prisma.deliveryPrediction.create({
+  const prediction = await db.deliveryPrediction.create({
     data: {
       projectId: input.projectId,
       targetId: input.targetId,
@@ -326,7 +324,7 @@ export async function getPrediction(
 ): Promise<MonteCarloResult | null> {
   // Check for valid cached prediction
   if (!forceRefresh) {
-    const cached = await prisma.deliveryPrediction.findFirst({
+    const cached = await db.deliveryPrediction.findFirst({
       where: {
         projectId,
         targetId,

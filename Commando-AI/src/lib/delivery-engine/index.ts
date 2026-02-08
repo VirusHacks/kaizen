@@ -28,16 +28,14 @@ export {
   scenarioTemplates,
 } from './what-if';
 
+// Constants
+export * from './constants';
+
 // Type exports
 export type {
   MonteCarloInput,
   MonteCarloResult,
 } from './monte-carlo';
-
-export type {
-  DependencyImpact,
-  AffectedIssue,
-} from './dependency-analyzer';
 
 export type {
   WhatIfScenario,

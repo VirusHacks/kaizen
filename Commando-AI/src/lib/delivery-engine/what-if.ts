@@ -9,10 +9,8 @@
  * Runs Monte Carlo simulation with modified parameters and compares outcomes.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { db } from '@/lib/db';
 import { runMonteCarloSimulation } from './monte-carlo';
-
-const prisma = new PrismaClient();
 
 export interface ScenarioChange {
   type: 'ADD_DEVELOPERS' | 'REDUCE_SCOPE' | 'INCREASE_VELOCITY' | 'REMOVE_BLOCKERS' | 'EXTEND_HOURS' | 'REMOVE_DEPENDENCY';
@@ -217,10 +215,10 @@ export async function runWhatIfScenario(
   scenario: WhatIfScenario
 ): Promise<ScenarioComparison> {
   // Get current team size
-  const allocations = await prisma.resourceAllocation.findMany({
+  const allocations = await db.resourceAllocation.findMany({
     where: { projectId },
   });
-  const currentTeamSize = allocations.length || 5; // Default 5 if no allocations
+  const currentTeamSize = allocations.length || 1;
 
   // Run baseline simulation (current state)
   const baseline = await runMonteCarloSimulation({
@@ -337,12 +335,12 @@ export async function saveScenario(
   scenario: WhatIfScenario,
   createdBy: string
 ): Promise<string> {
-  const saved = await prisma.deliveryScenario.create({
+  const saved = await db.deliveryScenario.create({
     data: {
       projectId,
       name: scenario.name,
       description: scenario.description,
-      changes: scenario.changes,
+      changes: scenario.changes as object,
       
       originalP70Date: comparison.currentP70,
       scenarioP70Date: comparison.scenarioP70,
@@ -434,7 +432,7 @@ export const scenarioTemplates = {
  * Get saved scenarios for a project
  */
 export async function getScenarios(projectId: string) {
-  return prisma.deliveryScenario.findMany({
+  return db.deliveryScenario.findMany({
     where: { projectId },
     orderBy: { createdAt: 'desc' },
   });
@@ -445,13 +443,13 @@ export async function getScenarios(projectId: string) {
  */
 export async function activateScenario(scenarioId: string) {
   // Deactivate all other scenarios first
-  await prisma.deliveryScenario.updateMany({
+  await db.deliveryScenario.updateMany({
     where: { isActive: true },
     data: { isActive: false },
   });
 
   // Activate this one
-  return prisma.deliveryScenario.update({
+  return db.deliveryScenario.update({
     where: { id: scenarioId },
     data: { isActive: true },
   });
