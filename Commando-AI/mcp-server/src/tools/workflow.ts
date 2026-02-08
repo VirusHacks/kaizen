@@ -1,6 +1,6 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { z } from 'zod'
-import { db } from '../db.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import { db } from '../db.js';
 
 export function registerWorkflowTools(server: McpServer) {
   // ─── Get allowed status transitions ───
@@ -9,7 +9,9 @@ export function registerWorkflowTools(server: McpServer) {
     'Get the allowed status transitions from a given status in a project workflow. Use this before changing task status to know which transitions are valid.',
     {
       projectId: z.string().describe('Project ID'),
-      currentStatus: z.string().describe('Current issue status (e.g., "TODO", "IN_PROGRESS")'),
+      currentStatus: z
+        .string()
+        .describe('Current issue status (e.g., "TODO", "IN_PROGRESS")'),
     },
     async ({ projectId, currentStatus }) => {
       const workflow = await db.projectWorkflow.findFirst({
@@ -22,33 +24,57 @@ export function registerWorkflowTools(server: McpServer) {
             },
           },
         },
-      })
+      });
 
       if (!workflow) {
-        return { content: [{ type: 'text' as const, text: 'No workflow found. Default transitions: TODO → IN_PROGRESS → IN_REVIEW → DONE' }] }
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: 'No workflow found. Default transitions: TODO → IN_PROGRESS → IN_REVIEW → DONE',
+            },
+          ],
+        };
       }
 
       const allowed = workflow.transitions
-        .filter((t) => t.fromStatus.status === currentStatus)
-        .map((t) => ({
-          toStatus: t.toStatus.status,
-          toDisplayName: t.toStatus.displayName,
-          transitionName: t.name,
-          requiresAssignee: t.requiresAssignee,
-          requiresComment: t.requiresComment,
-        }))
+        .filter(
+          (t: { fromStatus: { status: string } }) =>
+            t.fromStatus.status === currentStatus,
+        )
+        .map(
+          (t: {
+            fromStatus: { status: string };
+            toStatus: { status: string; displayName: string };
+            name: string;
+            requiresAssignee: boolean;
+            requiresComment: boolean;
+          }) => ({
+            toStatus: t.toStatus.status,
+            toDisplayName: t.toStatus.displayName,
+            transitionName: t.name,
+            requiresAssignee: t.requiresAssignee,
+            requiresComment: t.requiresComment,
+          }),
+        );
 
       return {
-        content: [{
-          type: 'text' as const,
-          text: JSON.stringify({
-            currentStatus,
-            allowedTransitions: allowed,
-          }, null, 2),
-        }],
-      }
-    }
-  )
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify(
+              {
+                currentStatus,
+                allowedTransitions: allowed,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      };
+    },
+  );
 
   // ─── Get full workflow definition ───
   server.tool(
@@ -67,31 +93,50 @@ export function registerWorkflowTools(server: McpServer) {
             },
           },
         },
-      })
+      });
 
       if (!workflow) {
-        return { content: [{ type: 'text' as const, text: 'No workflow configured. Using default: TODO → IN_PROGRESS → IN_REVIEW → DONE' }] }
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: 'No workflow configured. Using default: TODO → IN_PROGRESS → IN_REVIEW → DONE',
+            },
+          ],
+        };
       }
 
       const result = {
         name: workflow.name,
-        statuses: workflow.statuses.map((s) => ({
-          status: s.status,
-          displayName: s.displayName,
-          order: s.order,
-        })),
-        transitions: workflow.transitions.map((t) => ({
-          from: t.fromStatus.status,
-          to: t.toStatus.status,
-          name: t.name,
-          requiresAssignee: t.requiresAssignee,
-          requiresComment: t.requiresComment,
-        })),
-      }
+        statuses: workflow.statuses.map(
+          (s: { status: string; displayName: string; order: number }) => ({
+            status: s.status,
+            displayName: s.displayName,
+            order: s.order,
+          }),
+        ),
+        transitions: workflow.transitions.map(
+          (t: {
+            fromStatus: { status: string };
+            toStatus: { status: string };
+            name: string;
+            requiresAssignee: boolean;
+            requiresComment: boolean;
+          }) => ({
+            from: t.fromStatus.status,
+            to: t.toStatus.status,
+            name: t.name,
+            requiresAssignee: t.requiresAssignee,
+            requiresComment: t.requiresComment,
+          }),
+        ),
+      };
 
       return {
-        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
-      }
-    }
-  )
+        content: [
+          { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+        ],
+      };
+    },
+  );
 }

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
-import { getInstallationOctokit } from '@/lib/github-app'
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { db } from '@/lib/db';
+import { getInstallationOctokit } from '@/lib/github-app';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
-type Params = { params: Promise<{ owner: string; repo: string }> }
+type Params = { params: Promise<{ owner: string; repo: string }> };
 
 /**
  * GET /api/github/repos/[owner]/[repo]
@@ -13,24 +13,30 @@ type Params = { params: Promise<{ owner: string; repo: string }> }
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { userId } = await auth()
+    const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { owner, repo } = await params
-    const github = await db.gitHub.findFirst({ where: { userId } })
+    const { owner, repo } = await params;
+    const github = await db.gitHub.findFirst({ where: { userId } });
 
     if (!github?.installationId) {
-      return NextResponse.json({ error: 'GitHub App not installed' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'GitHub App not installed' },
+        { status: 400 },
+      );
     }
 
-    const octokit = getInstallationOctokit(github.installationId)
-    const { data } = await octokit.repos.get({ owner, repo })
+    const octokit = await getInstallationOctokit(github.installationId);
+    const { data } = await octokit.repos.get({ owner, repo });
 
-    return NextResponse.json({ repository: data })
+    return NextResponse.json({ repository: data });
   } catch (error) {
-    console.error('[GITHUB_REPO_GET]', error)
-    return NextResponse.json({ error: 'Failed to fetch repository' }, { status: 500 })
+    console.error('[GITHUB_REPO_GET]', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch repository' },
+      { status: 500 },
+    );
   }
 }

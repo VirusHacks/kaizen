@@ -1,18 +1,37 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Upload, FileText, Loader2, BarChart3, TrendingUp, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { useDashboardDataContext } from "./DashboardDataProvider";
-import AnalysisDashboard from "./AnalysisDashboard";
-import PredictionDashboard from "./PredictionDashboard";
-import GenerativeChartChatbot from "./GenerativeChartChatbot";
+import React, { useState, useEffect } from 'react';
+import {
+  Upload,
+  FileText,
+  Loader2,
+  BarChart3,
+  TrendingUp,
+  Sparkles,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+import { useDashboardDataContext } from './DashboardDataProvider';
+import AnalysisDashboard from './AnalysisDashboard';
+import PredictionDashboard from './PredictionDashboard';
+import GenerativeChartChatbot from './GenerativeChartChatbot';
 
 function DashboardContentInner() {
-  const { loading, refreshData, updateDataDirectly, monthlySales, addGeneratedChart } = useDashboardDataContext();
+  const {
+    loading,
+    refreshData,
+    updateDataDirectly,
+    monthlySales,
+    addGeneratedChart,
+  } = useDashboardDataContext();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStats, setUploadStats] = useState<any>(null);
   const [hasData, setHasData] = useState(false);
@@ -26,52 +45,55 @@ function DashboardContentInner() {
     }
   }, [loading, monthlySales]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith(".csv")) {
-      toast.error("Please upload a CSV file");
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Please upload a CSV file');
       return;
     }
 
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
 
     try {
-      const response = await fetch("/api/dashboard/upload", {
-        method: "POST",
+      const response = await fetch('/api/dashboard/upload', {
+        method: 'POST',
         body: formData,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to upload CSV");
+        throw new Error(data.error || 'Failed to upload CSV');
       }
 
       setUploadStats(data.stats);
-      
+
       // If analytics are returned, update the data context directly (no API call needed)
       if (data.analytics) {
         updateDataDirectly(data.analytics);
         setHasData(true);
-        toast.success("CSV uploaded and processed successfully!");
+        toast.success('CSV uploaded and processed successfully!');
       } else {
         // Fallback: refresh data from API
         refreshData();
         setHasData(true);
-        toast.success("CSV uploaded and processed successfully!");
+        toast.success('CSV uploaded and processed successfully!');
       }
     } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to upload CSV");
+      console.error('Upload error:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to upload CSV',
+      );
     } finally {
       setIsUploading(false);
     }
   };
-
 
   return (
     <div className="w-full min-h-screen bg-black space-y-8 pb-12">
@@ -93,7 +115,8 @@ function DashboardContentInner() {
             Upload Sales Data
           </CardTitle>
           <CardDescription className="text-gray-400 text-sm">
-            Upload a CSV file with sales transactions to begin analysis and forecasting
+            Upload a CSV file with sales transactions to begin analysis and
+            forecasting
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
@@ -132,15 +155,27 @@ function DashboardContentInner() {
               <div className="flex items-center gap-2 text-sm font-medium text-gray-400 bg-[#0a0a0a] border border-gray-800 px-4 py-2 rounded-lg">
                 <FileText className="h-4 w-4" />
                 <span>
-                  Processed: <span className="font-bold text-white">{uploadStats.processed}</span> rows
+                  Processed:{' '}
+                  <span className="font-bold text-white">
+                    {uploadStats.processed}
+                  </span>{' '}
+                  rows
                   {uploadStats.returns > 0 && (
                     <span className="ml-2">
-                      • <span className="text-orange-400">{uploadStats.returns}</span> returns
+                      •{' '}
+                      <span className="text-orange-400">
+                        {uploadStats.returns}
+                      </span>{' '}
+                      returns
                     </span>
                   )}
                   {uploadStats.creditNotes > 0 && (
                     <span className="ml-2">
-                      • <span className="text-red-400">{uploadStats.creditNotes}</span> credit notes
+                      •{' '}
+                      <span className="text-red-400">
+                        {uploadStats.creditNotes}
+                      </span>{' '}
+                      credit notes
                     </span>
                   )}
                 </span>
@@ -154,22 +189,22 @@ function DashboardContentInner() {
         <Tabs defaultValue="analysis" className="w-full">
           <div className="flex justify-center mb-8">
             <TabsList className="grid w-full max-w-3xl grid-cols-3 h-12 bg-[#0a0a0a] border border-gray-800 rounded-lg p-1">
-              <TabsTrigger 
-                value="analysis" 
+              <TabsTrigger
+                value="analysis"
                 className="flex items-center justify-center gap-2 text-sm font-medium data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 data-[state=active]:border data-[state=active]:border-purple-500/30 text-gray-400 transition-all rounded-md"
               >
                 <BarChart3 className="h-4 w-4" />
                 <span>Analysis</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="prediction" 
+              <TabsTrigger
+                value="prediction"
                 className="flex items-center justify-center gap-2 text-sm font-medium data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 data-[state=active]:border data-[state=active]:border-purple-500/30 text-gray-400 transition-all rounded-md"
               >
                 <TrendingUp className="h-4 w-4" />
                 <span>Prediction</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="generator" 
+              <TabsTrigger
+                value="generator"
                 className="flex items-center justify-center gap-2 text-sm font-medium data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 data-[state=active]:border data-[state=active]:border-purple-500/30 text-gray-400 transition-all rounded-md"
               >
                 <Sparkles className="h-4 w-4" />
@@ -187,7 +222,10 @@ function DashboardContentInner() {
           </TabsContent>
 
           <TabsContent value="generator" className="mt-0 space-y-6">
-            <GenerativeChartChatbot onChartGenerated={addGeneratedChart} embeddedMode={true} />
+            <GenerativeChartChatbot
+              onChartGenerated={addGeneratedChart}
+              embeddedMode={true}
+            />
           </TabsContent>
         </Tabs>
       ) : (

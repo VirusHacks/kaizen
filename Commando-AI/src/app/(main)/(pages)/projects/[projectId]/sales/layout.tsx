@@ -1,6 +1,7 @@
-"use client";
+'use client';
 
-import { DashboardDataProvider } from "./_components/DashboardDataProvider";
+import React from 'react';
+import { DashboardDataProvider } from './_components/DashboardDataProvider';
 
 export default function DashboardLayout({
   children,
@@ -9,4 +10,3 @@ export default function DashboardLayout({
 }) {
   return <DashboardDataProvider>{children}</DashboardDataProvider>;
 }
-

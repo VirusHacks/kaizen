@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
-import { onAuthenticateUser } from "@/actions/auth";
-import { NextRequest, NextResponse } from "next/server";
-import { parse } from "csv-parse/sync";
+import { db } from '@/lib/db';
+import { onAuthenticateUser } from '@/actions/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { parse } from 'csv-parse/sync';
 
 interface CSVRow {
   Invoice: string;
@@ -37,14 +37,14 @@ export async function POST(request: NextRequest) {
   try {
     const user = await onAuthenticateUser();
     if (!user.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get('file') as File;
 
     if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
     const text = await file.text();
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       const quantity = parseFloat(row.Quantity) || 0;
       const price = parseFloat(row.Price) || 0;
       const customerId = row.CustomerID ? parseInt(row.CustomerID) : 0;
-      
+
       // Parse date
       let invoiceDate: Date;
       try {
@@ -75,12 +75,12 @@ export async function POST(request: NextRequest) {
         continue; // Skip invalid dates
       }
 
-      const description = row.Description?.trim() || "Unknown Product";
+      const description = row.Description?.trim() || 'Unknown Product';
       const totalPrice = quantity * price;
 
       // Extract derived fields
-      const invoiceMonth = `${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, "0")}`;
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const invoiceMonth = `${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}`;
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       const dayOfWeek = dayNames[invoiceDate.getDay()];
       const hourOfDay = invoiceDate.getHours();
 
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         invoiceDate,
         price,
         customerId,
-        country: row.Country || "Unknown",
+        country: row.Country || 'Unknown',
         totalPrice,
         invoiceMonth,
         dayOfWeek,
@@ -122,14 +122,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate all analytics in memory
-    const analytics = calculateAllAnalytics(uniqueData, user.user.id);
+    const analytics = calculateAllAnalytics(uniqueData, String(user.user.id));
 
     // Verify Prisma client has the model
     if (!db) {
-      console.error("Prisma client not initialized");
+      console.error('Prisma client not initialized');
       return NextResponse.json({
         success: true,
-        message: "CSV processed successfully (analytics not saved - Prisma client unavailable)",
+        message:
+          'CSV processed successfully (analytics not saved - Prisma client unavailable)',
         stats: {
           total: records.length,
           processed: uniqueData.length,
@@ -143,12 +144,19 @@ export async function POST(request: NextRequest) {
 
     // Check if model exists
     if (!db.dashboardAnalytics) {
-      console.error("dashboardAnalytics model not found in Prisma client");
-      console.error("Available models:", Object.keys(db).filter(k => !k.startsWith('_') && typeof db[k as keyof typeof db] === 'object'));
+      console.error('dashboardAnalytics model not found in Prisma client');
+      console.error(
+        'Available models:',
+        Object.keys(db).filter(
+          (k) =>
+            !k.startsWith('_') && typeof db[k as keyof typeof db] === 'object',
+        ),
+      );
       // Still return analytics even if we can't save to DB
       return NextResponse.json({
         success: true,
-        message: "CSV processed successfully (analytics not saved - model missing. Please restart server.)",
+        message:
+          'CSV processed successfully (analytics not saved - model missing. Please restart server.)',
         stats: {
           total: records.length,
           processed: uniqueData.length,
@@ -163,35 +171,36 @@ export async function POST(request: NextRequest) {
     // Store analytics in database (upsert - update if exists, create if not)
     try {
       await db.dashboardAnalytics.upsert({
-      where: { userId: user.user.id },
-      update: {
-        monthlySales: analytics.monthlySales as any,
-        aovTrend: analytics.aovTrend as any,
-        topCountries: analytics.topCountries as any,
-        topProducts: analytics.topProducts as any,
-        topCustomers: analytics.topCustomers as any,
-        rfmDistribution: analytics.rfmDistribution as any,
-        revenueByDay: analytics.revenueByDay as any,
-        revenueByHour: analytics.revenueByHour as any,
-      },
-      create: {
-        userId: user.user.id,
-        monthlySales: analytics.monthlySales as any,
-        aovTrend: analytics.aovTrend as any,
-        topCountries: analytics.topCountries as any,
-        topProducts: analytics.topProducts as any,
-        topCustomers: analytics.topCustomers as any,
-        rfmDistribution: analytics.rfmDistribution as any,
-        revenueByDay: analytics.revenueByDay as any,
-        revenueByHour: analytics.revenueByHour as any,
-      },
-    });
+        where: { userId: user.user.id },
+        update: {
+          monthlySales: analytics.monthlySales as any,
+          aovTrend: analytics.aovTrend as any,
+          topCountries: analytics.topCountries as any,
+          topProducts: analytics.topProducts as any,
+          topCustomers: analytics.topCustomers as any,
+          rfmDistribution: analytics.rfmDistribution as any,
+          revenueByDay: analytics.revenueByDay as any,
+          revenueByHour: analytics.revenueByHour as any,
+        },
+        create: {
+          userId: user.user.id,
+          monthlySales: analytics.monthlySales as any,
+          aovTrend: analytics.aovTrend as any,
+          topCountries: analytics.topCountries as any,
+          topProducts: analytics.topProducts as any,
+          topCustomers: analytics.topCustomers as any,
+          rfmDistribution: analytics.rfmDistribution as any,
+          revenueByDay: analytics.revenueByDay as any,
+          revenueByHour: analytics.revenueByHour as any,
+        },
+      });
     } catch (dbError) {
-      console.error("Error saving analytics to database:", dbError);
+      console.error('Error saving analytics to database:', dbError);
       // Still return analytics even if DB save fails
       return NextResponse.json({
         success: true,
-        message: "CSV processed successfully (analytics calculated but not saved)",
+        message:
+          'CSV processed successfully (analytics calculated but not saved)',
         stats: {
           total: records.length,
           processed: uniqueData.length,
@@ -200,13 +209,13 @@ export async function POST(request: NextRequest) {
           duplicates: processedData.length - uniqueData.length,
         },
         analytics,
-        warning: "Analytics not saved to database. Please restart the server.",
+        warning: 'Analytics not saved to database. Please restart the server.',
       });
     }
 
     return NextResponse.json({
       success: true,
-      message: "CSV processed successfully",
+      message: 'CSV processed successfully',
       stats: {
         total: records.length,
         processed: uniqueData.length,
@@ -217,18 +226,24 @@ export async function POST(request: NextRequest) {
       analytics, // Return analytics directly
     });
   } catch (error) {
-    console.error("Error processing CSV:", error);
+    console.error('Error processing CSV:', error);
     return NextResponse.json(
-      { error: "Failed to process CSV", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
+      {
+        error: 'Failed to process CSV',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
     );
   }
 }
 
-function calculateAllAnalytics(transactions: ProcessedTransaction[], userId: string) {
+function calculateAllAnalytics(
+  transactions: ProcessedTransaction[],
+  userId: string,
+) {
   // Filter out returns and credit notes
   const validTransactions = transactions.filter(
-    (t) => !t.isReturn && !t.isCreditNote
+    (t) => !t.isReturn && !t.isCreditNote,
   );
 
   // Monthly Sales Trend
@@ -269,7 +284,7 @@ function calculateAllAnalytics(transactions: ProcessedTransaction[], userId: str
 
 function getMonthlySalesTrend(transactions: ProcessedTransaction[]) {
   const monthlyData = new Map<string, number>();
-  
+
   transactions.forEach((t) => {
     const month = t.invoiceMonth;
     monthlyData.set(month, (monthlyData.get(month) || 0) + t.totalPrice);
@@ -282,7 +297,7 @@ function getMonthlySalesTrend(transactions: ProcessedTransaction[]) {
 
 function getAOVTrend(transactions: ProcessedTransaction[]) {
   const monthlyInvoices = new Map<string, { total: number; count: number }>();
-  
+
   transactions.forEach((t) => {
     const month = t.invoiceMonth;
     if (!monthlyInvoices.has(month)) {
@@ -303,9 +318,12 @@ function getAOVTrend(transactions: ProcessedTransaction[]) {
 
 function getTopCountries(transactions: ProcessedTransaction[]) {
   const countryData = new Map<string, number>();
-  
+
   transactions.forEach((t) => {
-    countryData.set(t.country, (countryData.get(t.country) || 0) + t.totalPrice);
+    countryData.set(
+      t.country,
+      (countryData.get(t.country) || 0) + t.totalPrice,
+    );
   });
 
   return Array.from(countryData.entries())
@@ -316,9 +334,12 @@ function getTopCountries(transactions: ProcessedTransaction[]) {
 
 function getTopProducts(transactions: ProcessedTransaction[]) {
   const productData = new Map<string, number>();
-  
+
   transactions.forEach((t) => {
-    productData.set(t.description, (productData.get(t.description) || 0) + t.totalPrice);
+    productData.set(
+      t.description,
+      (productData.get(t.description) || 0) + t.totalPrice,
+    );
   });
 
   return Array.from(productData.entries())
@@ -328,11 +349,11 @@ function getTopProducts(transactions: ProcessedTransaction[]) {
 }
 
 function getRevenueByDayOfWeek(transactions: ProcessedTransaction[]) {
-  const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const dayData = new Map<string, number>();
-  
+
   dayOrder.forEach((day) => dayData.set(day, 0));
-  
+
   transactions.forEach((t) => {
     dayData.set(t.dayOfWeek, (dayData.get(t.dayOfWeek) || 0) + t.totalPrice);
   });
@@ -345,11 +366,11 @@ function getRevenueByDayOfWeek(transactions: ProcessedTransaction[]) {
 
 function getRevenueByHour(transactions: ProcessedTransaction[]) {
   const hourData = new Map<number, number>();
-  
+
   for (let i = 0; i < 24; i++) {
     hourData.set(i, 0);
   }
-  
+
   transactions.forEach((t) => {
     hourData.set(t.hourOfDay, (hourData.get(t.hourOfDay) || 0) + t.totalPrice);
   });
@@ -365,11 +386,14 @@ function calculateRFM(transactions: ProcessedTransaction[]) {
   const validTransactions = transactions.filter((t) => t.customerId !== 0);
 
   // Group by customer
-  const customerData = new Map<number, {
-    lastOrderDate: Date;
-    invoices: Set<string>;
-    totalSpent: number;
-  }>();
+  const customerData = new Map<
+    number,
+    {
+      lastOrderDate: Date;
+      invoices: Set<string>;
+      totalSpent: number;
+    }
+  >();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -387,38 +411,46 @@ function calculateRFM(transactions: ProcessedTransaction[]) {
     const data = customerData.get(customerId)!;
     data.invoices.add(transaction.invoice);
     data.totalSpent += transaction.totalPrice;
-    
+
     if (transaction.invoiceDate > data.lastOrderDate) {
       data.lastOrderDate = transaction.invoiceDate;
     }
   }
 
   // Calculate RFM metrics
-  const rfmData = Array.from(customerData.entries()).map(([customerId, data]) => {
-    const lastOrderDate = new Date(data.lastOrderDate);
-    lastOrderDate.setHours(0, 0, 0, 0);
-    const recency = Math.floor((today.getTime() - lastOrderDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    return {
-      customerId,
-      recency,
-      frequency: data.invoices.size,
-      monetary: data.totalSpent,
-    };
-  });
+  const rfmData = Array.from(customerData.entries()).map(
+    ([customerId, data]) => {
+      const lastOrderDate = new Date(data.lastOrderDate);
+      lastOrderDate.setHours(0, 0, 0, 0);
+      const recency = Math.floor(
+        (today.getTime() - lastOrderDate.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      return {
+        customerId,
+        recency,
+        frequency: data.invoices.size,
+        monetary: data.totalSpent,
+      };
+    },
+  );
 
   if (rfmData.length === 0) {
     return [];
   }
 
   // Calculate quantiles for scoring (1-5)
-  const recencyValues = rfmData.map(d => d.recency).sort((a, b) => a - b);
-  const frequencyValues = rfmData.map(d => d.frequency).sort((a, b) => a - b);
-  const monetaryValues = rfmData.map(d => d.monetary).sort((a, b) => a - b);
+  const recencyValues = rfmData.map((d) => d.recency).sort((a, b) => a - b);
+  const frequencyValues = rfmData.map((d) => d.frequency).sort((a, b) => a - b);
+  const monetaryValues = rfmData.map((d) => d.monetary).sort((a, b) => a - b);
 
-  const getQuantile = (value: number, sortedArray: number[], reverse: boolean = false): number => {
+  const getQuantile = (
+    value: number,
+    sortedArray: number[],
+    reverse: boolean = false,
+  ): number => {
     if (sortedArray.length === 0) return 1;
-    
+
     if (reverse) {
       // For recency: lower days = higher score (recent customers score higher)
       let index = 0;
@@ -429,7 +461,15 @@ function calculateRFM(transactions: ProcessedTransaction[]) {
           break;
         }
       }
-      return Math.max(1, Math.min(5, Math.ceil(((sortedArray.length - index + 1) / sortedArray.length) * 5)));
+      return Math.max(
+        1,
+        Math.min(
+          5,
+          Math.ceil(
+            ((sortedArray.length - index + 1) / sortedArray.length) * 5,
+          ),
+        ),
+      );
     } else {
       // For frequency and monetary: higher is better
       let index = 0;
@@ -440,31 +480,34 @@ function calculateRFM(transactions: ProcessedTransaction[]) {
           break;
         }
       }
-      return Math.max(1, Math.min(5, Math.ceil((index / sortedArray.length) * 5)));
+      return Math.max(
+        1,
+        Math.min(5, Math.ceil((index / sortedArray.length) * 5)),
+      );
     }
   };
 
   // Calculate scores and segments
-  return rfmData.map(data => {
+  return rfmData.map((data) => {
     const rScore = getQuantile(data.recency, recencyValues, true);
     const fScore = getQuantile(data.frequency, frequencyValues, false);
     const mScore = getQuantile(data.monetary, monetaryValues, false);
     const rfmScore = `${rScore}${fScore}${mScore}`;
-    
+
     // Determine segment
-    let rfmSegment = "At-Risk";
+    let rfmSegment = 'At-Risk';
     if (rScore >= 4 && fScore >= 4 && mScore >= 4) {
-      rfmSegment = "Champions";
+      rfmSegment = 'Champions';
     } else if (rScore >= 3 && fScore >= 3 && mScore >= 3) {
-      rfmSegment = "Loyal Customers";
+      rfmSegment = 'Loyal Customers';
     } else if (rScore <= 2 && fScore >= 3 && mScore >= 3) {
-      rfmSegment = "Potential Loyalists";
+      rfmSegment = 'Potential Loyalists';
     } else if (rScore >= 4 && fScore <= 2 && mScore <= 2) {
-      rfmSegment = "New Customers";
+      rfmSegment = 'New Customers';
     } else if (rScore <= 2 && fScore <= 2 && mScore <= 2) {
-      rfmSegment = "Lost Customers";
+      rfmSegment = 'Lost Customers';
     } else if (rScore <= 2 && fScore >= 3) {
-      rfmSegment = "At-Risk";
+      rfmSegment = 'At-Risk';
     }
 
     return {
@@ -493,15 +536,16 @@ function getTopCustomers(rfmData: any[]) {
 
 function getRFMDistribution(rfmData: any[]) {
   const segmentCount = new Map<string, number>();
-  
+
   rfmData.forEach((item) => {
-    segmentCount.set(item.rfmSegment, (segmentCount.get(item.rfmSegment) || 0) + 1);
+    segmentCount.set(
+      item.rfmSegment,
+      (segmentCount.get(item.rfmSegment) || 0) + 1,
+    );
   });
 
-  return Array.from(segmentCount.entries())
-    .map(([segment, count]) => ({
-      segment,
-      count,
-    }));
+  return Array.from(segmentCount.entries()).map(([segment, count]) => ({
+    segment,
+    count,
+  }));
 }
-

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -9,17 +9,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { format } from "date-fns";
-import { Users, Mail, Calendar, Tag, Phone } from "lucide-react";
-import { motion } from "framer-motion";
+} from '@/components/ui/table';
+import { format } from 'date-fns';
+import { Users, Mail, Calendar, Tag, Phone } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 type Lead = {
   id: string;
   name: string;
   email: string;
-  phone: string;
-  tags: string[];
+  phone?: string;
+  tags?: string[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -123,7 +123,7 @@ export default function NewLeadsList({ leads }: Props) {
                     <TableCell className="py-4">
                       <div className="flex items-center gap-2 text-gray-400 text-sm">
                         <Phone className="h-3 w-3" />
-                        {lead.phone}
+                        {lead.phone || 'N/A'}
                       </div>
                     </TableCell>
                     <TableCell className="py-4">
@@ -155,7 +155,7 @@ export default function NewLeadsList({ leads }: Props) {
                     <TableCell className="py-4 text-right">
                       <div className="flex items-center justify-end gap-2 text-xs text-gray-400">
                         <Calendar className="h-3 w-3" />
-                        {format(new Date(lead.createdAt), "MMM d, yyyy")}
+                        {format(new Date(lead.createdAt), 'MMM d, yyyy')}
                       </div>
                     </TableCell>
                   </motion.tr>
