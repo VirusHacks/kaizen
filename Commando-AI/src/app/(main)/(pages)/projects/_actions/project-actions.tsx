@@ -9,6 +9,42 @@ import { createDefaultWorkflow } from '../[projectId]/project-manager/settings/w
 import { createRepository, getRepository } from '../../_actions/github-api'
 
 /**
+ * Safely parse a date value into a valid Date object.
+ * Handles ISO strings ("2026-02-11"), Date objects, and prevents
+ * malformed dates with 6-digit years ("+012026-...").
+ */
+function parseSafeDate(value: string | Date | unknown): Date | null {
+  try {
+    let dateStr: string
+    if (value instanceof Date) {
+      dateStr = value.toISOString()
+    } else if (typeof value === 'string') {
+      dateStr = value
+    } else {
+      return null
+    }
+
+    // For date-only strings like "2026-02-11", append time to avoid timezone issues
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      dateStr = `${dateStr}T00:00:00.000Z`
+    }
+
+    const parsed = new Date(dateStr)
+
+    // Validate: year must be 4 digits (1000-9999) and date must be valid
+    if (isNaN(parsed.getTime()) || parsed.getFullYear() < 1000 || parsed.getFullYear() > 9999) {
+      console.warn('[parseSafeDate] Invalid date value:', value)
+      return null
+    }
+
+    return parsed
+  } catch {
+    console.warn('[parseSafeDate] Failed to parse date:', value)
+    return null
+  }
+}
+
+/**
  * Ensures the current Clerk user exists in our database.
  * Fallback for when Clerk webhook hasn't synced the user.
  */
@@ -298,11 +334,15 @@ export const createProject = async (
       })
 
       // 2. Create ProjectSetup with extended fields
+      // Parse dates safely — handle both ISO strings ("2026-02-11") and Date objects
+      const parsedStartDate = startDate ? parseSafeDate(startDate) : null
+      const parsedEndDate = endDate ? parseSafeDate(endDate) : null
+
       await tx.projectSetup.create({
         data: {
           projectId: proj.id,
-          startDate: startDate ? new Date(startDate) : null,
-          endDate: endDate ? new Date(endDate) : null,
+          startDate: parsedStartDate,
+          endDate: parsedEndDate,
           teamSize: teamSize ? Number(teamSize) : null,
           techStack: techStack || null,
           vision: vision || null,

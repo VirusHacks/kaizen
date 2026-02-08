@@ -42,38 +42,56 @@ export const onGitHubConnect = async (
   username: string,
   userId: string,
   installationId?: number,
-  appSlug?: string
+  appSlug?: string,
+  refreshToken?: string,
+  expiresIn?: number
 ) => {
   if (accessToken) {
     try {
       // Ensure user exists in DB before creating GitHub connection
       await ensureUserInDb()
-      // Check if GitHub connection already exists for this user
-      const existingConnection = await db.connections.findFirst({
-        where: {
-          type: 'GitHub',
-          userId: userId,
-        },
-        include: {
-          GitHub: true,
-        },
+
+      // Calculate token expiry time
+      const tokenExpiresAt = expiresIn
+        ? new Date(Date.now() + expiresIn * 1000)
+        : null
+
+      // Check if a GitHub record already exists for this user (by userId)
+      const existingGitHub = await db.gitHub.findFirst({
+        where: { userId },
       })
 
-      if (existingConnection) {
-        // Update existing connection
+      if (existingGitHub) {
+        // Update existing GitHub record
         const updatedGitHub = await db.gitHub.update({
-          where: {
-            id: existingConnection.GitHub!.id,
-          },
+          where: { id: existingGitHub.id },
           data: {
             accessToken,
             username,
             ...(installationId ? { installationId } : {}),
             ...(appSlug ? { appSlug } : {}),
+            ...(refreshToken ? { refreshToken } : {}),
+            tokenExpiresAt,
           },
         })
 
-        return existingConnection
+        // Ensure a connection record exists
+        const existingConn = await db.connections.findFirst({
+          where: { type: 'GitHub', userId },
+        })
+        if (!existingConn) {
+          await db.connections.create({
+            data: { type: 'GitHub', userId, githubId: existingGitHub.id },
+          })
+        } else if (existingConn.githubId !== existingGitHub.id) {
+          // Fix mismatched connection record
+          await db.connections.update({
+            where: { id: existingConn.id },
+            data: { githubId: existingGitHub.id },
+          })
+        }
+
+        return updatedGitHub
       }
 
       // Create new GitHub connection
@@ -84,6 +102,8 @@ export const onGitHubConnect = async (
           userId,
           installationId: installationId || null,
           appSlug: appSlug || null,
+          refreshToken: refreshToken || null,
+          tokenExpiresAt,
         },
       })
 

@@ -1,6 +1,6 @@
 /**
  * Comprehensive test script for Predictive Delivery Engine
- * 
+ *
  * This script:
  * 1. Seeds velocity data for Monte Carlo simulations
  * 2. Creates sample issues with dependencies
@@ -10,7 +10,10 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { runMonteCarloSimulation, savePrediction } from './src/lib/delivery-engine/monte-carlo';
+import {
+  runMonteCarloSimulation,
+  savePrediction,
+} from './src/lib/delivery-engine/monte-carlo';
 import { analyzeDependencyImpact } from './src/lib/delivery-engine/dependency-analyzer';
 import { runWhatIfScenario } from './src/lib/delivery-engine/what-if';
 
@@ -18,16 +21,16 @@ const prisma = new PrismaClient();
 
 async function seedVelocityData(projectId: string) {
   console.log('\n📊 Seeding velocity data...');
-  
+
   const velocityData = [
-    { points: 22, tasks: 11, utilization: 0.75, burnout: 0.20 },
-    { points: 24, tasks: 12, utilization: 0.80, burnout: 0.30 },
-    { points: 18, tasks: 9, utilization: 0.70, burnout: 0.15 },
+    { points: 22, tasks: 11, utilization: 0.75, burnout: 0.2 },
+    { points: 24, tasks: 12, utilization: 0.8, burnout: 0.3 },
+    { points: 18, tasks: 9, utilization: 0.7, burnout: 0.15 },
     { points: 26, tasks: 13, utilization: 0.85, burnout: 0.35 },
     { points: 20, tasks: 10, utilization: 0.75, burnout: 0.25 },
     { points: 23, tasks: 11, utilization: 0.78, burnout: 0.22 },
     { points: 25, tasks: 12, utilization: 0.82, burnout: 0.28 },
-    { points: 21, tasks: 10, utilization: 0.74, burnout: 0.20 },
+    { points: 21, tasks: 10, utilization: 0.74, burnout: 0.2 },
   ];
 
   for (let i = 0; i < velocityData.length; i++) {
@@ -35,7 +38,7 @@ async function seedVelocityData(projectId: string) {
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - (8 - i) * 7);
     weekStart.setHours(0, 0, 0, 0);
-    
+
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 7);
 
@@ -54,8 +57,11 @@ async function seedVelocityData(projectId: string) {
     console.log(`  ✅ Week ${i + 1}: ${weekData.points} story points`);
   }
 
-  const avgVelocity = velocityData.reduce((sum, d) => sum + d.points, 0) / velocityData.length;
-  console.log(`\n📈 Average velocity: ${avgVelocity.toFixed(1)} story points/week`);
+  const avgVelocity =
+    velocityData.reduce((sum, d) => sum + d.points, 0) / velocityData.length;
+  console.log(
+    `\n📈 Average velocity: ${avgVelocity.toFixed(1)} story points/week`,
+  );
 }
 
 async function createSampleIssues(projectId: string) {
@@ -70,7 +76,7 @@ async function createSampleIssues(projectId: string) {
 
   // Get first sprint
   let sprint = await prisma.sprint.findFirst({ where: { projectId } });
-  
+
   if (!sprint) {
     sprint = await prisma.sprint.create({
       data: {
@@ -128,7 +134,11 @@ async function createSampleIssues(projectId: string) {
   return { parentIssue, sprint };
 }
 
-async function testDeliveryPrediction(projectId: string, issueId: string, issueTitle: string) {
+async function testDeliveryPrediction(
+  projectId: string,
+  issueId: string,
+  issueTitle: string,
+) {
   console.log(`\n🎯 Testing delivery prediction for: ${issueTitle}`);
 
   const result = await runMonteCarloSimulation({
@@ -146,12 +156,20 @@ async function testDeliveryPrediction(projectId: string, issueId: string, issueT
   console.log(`  P85 (85% confidence): ${result.p85Date.toDateString()}`);
   console.log(`  P90 (90% confidence): ${result.p90Date.toDateString()}`);
   console.log(`  Confidence Level: ${result.confidence}`);
-  console.log(`  Historical Velocity: ${result.historicalVelocity.toFixed(1)} points/week`);
+  console.log(
+    `  Historical Velocity: ${result.historicalVelocity.toFixed(1)} points/week`,
+  );
 
   // Save prediction
   await savePrediction(
-    { projectId, targetId: issueId, targetType: 'ISSUE', remainingComplexity: 40, dependencyCount: 3 },
-    result
+    {
+      projectId,
+      targetId: issueId,
+      targetType: 'ISSUE',
+      remainingComplexity: 40,
+      dependencyCount: 3,
+    },
+    result,
   );
 
   // Update title
@@ -165,7 +183,11 @@ async function testDeliveryPrediction(projectId: string, issueId: string, issueT
   return result;
 }
 
-async function testDependencyImpact(projectId: string, issueId: string, issueTitle: string) {
+async function testDependencyImpact(
+  projectId: string,
+  issueId: string,
+  issueTitle: string,
+) {
   console.log(`\n🔗 Testing dependency impact for: ${issueTitle}`);
 
   const impact = await analyzeDependencyImpact(projectId, issueId, 5); // 5 days delay
@@ -176,10 +198,12 @@ async function testDependencyImpact(projectId: string, issueId: string, issueTit
   console.log(`  Affected Issues: ${impact.affectedIssues.length}`);
   console.log(`  Critical Path: ${impact.criticalPath ? 'YES' : 'NO'}`);
   console.log(`  Risk Score: ${impact.riskScore}/100`);
-  
+
   console.log('\n📋 Affected Issues:');
   impact.affectedIssues.forEach((issue) => {
-    console.log(`    - ${issue.issueTitle}: +${issue.delayDays.toFixed(1)} days delay`);
+    console.log(
+      `    - ${issue.issueTitle}: +${issue.delayDays.toFixed(1)} days delay`,
+    );
   });
 
   console.log('\n💡 Recommendations:');
@@ -195,8 +219,8 @@ async function testDependencyImpact(projectId: string, issueId: string, issueTit
       rootIssueTitle: impact.rootIssueTitle,
       chainLength: impact.affectedIssues.length,
       totalDaysAtRisk: impact.totalImpact,
-      blockedIssues: impact.affectedIssues,
-      criticalPath: impact.criticalPath,
+      blockedIssues: impact.affectedIssues as any,
+      criticalPath: impact.criticalPath as any,
       riskScore: impact.riskScore,
       impactRadius: impact.affectedIssues.length,
     },
@@ -207,7 +231,11 @@ async function testDependencyImpact(projectId: string, issueId: string, issueTit
   return impact;
 }
 
-async function testWhatIfScenario(projectId: string, issueId: string, issueTitle: string) {
+async function testWhatIfScenario(
+  projectId: string,
+  issueId: string,
+  issueTitle: string,
+) {
   console.log(`\n💡 Testing what-if scenario for: ${issueTitle}`);
 
   const comparison = await runWhatIfScenario(
@@ -222,14 +250,16 @@ async function testWhatIfScenario(projectId: string, issueId: string, issueTitle
       changes: [
         { type: 'ADD_DEVELOPERS', value: 2, description: 'Add 2 developers' },
       ],
-    }
+    },
   );
 
   console.log('\n🔮 What-If Scenario Results:');
   console.log(`  Current P70 Date: ${comparison.currentP70.toDateString()}`);
   console.log(`  Scenario P70 Date: ${comparison.scenarioP70.toDateString()}`);
   console.log(`  Days Saved: ${comparison.daysSaved} days`);
-  console.log(`  Confidence Change: ${comparison.confidenceChange > 0 ? '+' : ''}${comparison.confidenceChange}%`);
+  console.log(
+    `  Confidence Change: ${comparison.confidenceChange > 0 ? '+' : ''}${comparison.confidenceChange}%`,
+  );
   console.log(`  Cost Impact: $${comparison.costImpact?.toLocaleString()}`);
   console.log(`  Feasible: ${comparison.isFeasible ? 'YES' : 'NO'}`);
 
@@ -254,7 +284,7 @@ async function main() {
 
   // Get first project
   const project = await prisma.project.findFirst();
-  
+
   if (!project) {
     console.log('❌ No project found. Please create a project first.');
     process.exit(1);
@@ -282,14 +312,17 @@ async function main() {
     console.log('\n' + '='.repeat(60));
     console.log('\n✨ All tests completed successfully!');
     console.log('\n🎯 Next Steps:');
-    console.log(`   1. Visit: /projects/${project.id}/project-manager/dashboard`);
+    console.log(
+      `   1. Visit: /projects/${project.id}/project-manager/dashboard`,
+    );
     console.log('   2. Click "Open Delivery Engine" button');
     console.log('   3. Explore predictions, scenarios, and dependencies');
     console.log('\n🤖 Agent Collaboration:');
-    console.log(`   1. Visit: /projects/${project.id}/project-manager/agent-collaboration`);
+    console.log(
+      `   1. Visit: /projects/${project.id}/project-manager/agent-collaboration`,
+    );
     console.log('   2. Click "Trigger Planning Cycle"');
     console.log('   3. View agent decisions and recommendations\n');
-
   } catch (error) {
     console.error('\n❌ Test failed:', error);
     throw error;

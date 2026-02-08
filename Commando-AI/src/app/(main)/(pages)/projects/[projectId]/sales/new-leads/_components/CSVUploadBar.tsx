@@ -1,41 +1,47 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Upload, FileText, Loader2, CheckCircle2, FileUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
+import { Upload, FileText, Loader2, CheckCircle2, FileUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
-export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: () => void }) {
+export default function CSVUploadBar({
+  onUploadSuccess,
+}: {
+  onUploadSuccess?: () => void;
+}) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStats, setUploadStats] = useState<any>(null);
   const router = useRouter();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith(".csv")) {
-      toast.error("Please upload a CSV file");
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Please upload a CSV file');
       return;
     }
 
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
 
     try {
-      const response = await fetch("/api/leads/upload", {
-        method: "POST",
+      const response = await fetch('/api/leads/upload', {
+        method: 'POST',
         body: formData,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to upload CSV");
+        throw new Error(data.error || 'Failed to upload CSV');
       }
 
       setUploadStats({
@@ -45,17 +51,19 @@ export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: ()
       });
 
       toast.success(
-        `CSV processed successfully! ${data.stats?.newLeads || 0} new leads added, ${data.stats?.updated || 0} updated.`
+        `CSV processed successfully! ${data.stats?.newLeads || 0} new leads added, ${data.stats?.updated || 0} updated.`,
       );
 
       router.refresh();
-      
+
       if (onUploadSuccess) {
         onUploadSuccess();
       }
     } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to upload CSV");
+      console.error('Upload error:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to upload CSV',
+      );
     } finally {
       setIsUploading(false);
       event.target.value = '';
@@ -75,7 +83,9 @@ export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: ()
             <Upload className="h-4 w-4 text-purple-400" />
             Upload Sales Data
           </CardTitle>
-          <p className="text-gray-400 text-sm mt-1">Import leads from a CSV file</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Import leads from a CSV file
+          </p>
         </CardHeader>
         <CardContent className="p-6 h-full flex flex-col">
           <div className="space-y-3 flex-1">
@@ -89,7 +99,9 @@ export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: ()
                 >
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <span className="text-sm font-bold text-emerald-400">{uploadStats.processed}</span>
+                    <span className="text-sm font-bold text-emerald-400">
+                      {uploadStats.processed}
+                    </span>
                     <span className="text-xs text-gray-400">processed</span>
                   </div>
                   {uploadStats.newLeads > 0 && (
@@ -99,7 +111,9 @@ export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: ()
                       className="flex items-center gap-2 text-xs text-gray-300 ml-6"
                     >
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span className="font-semibold">+{uploadStats.newLeads}</span>
+                      <span className="font-semibold">
+                        +{uploadStats.newLeads}
+                      </span>
                       <span>new leads</span>
                     </motion.div>
                   )}
@@ -111,7 +125,9 @@ export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: ()
                       className="flex items-center gap-2 text-xs text-gray-300 ml-6"
                     >
                       <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                      <span className="font-semibold">{uploadStats.updated}</span>
+                      <span className="font-semibold">
+                        {uploadStats.updated}
+                      </span>
                       <span>updated</span>
                     </motion.div>
                   )}
@@ -119,7 +135,7 @@ export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: ()
               )}
             </AnimatePresence>
           </div>
-          
+
           <div className="mt-auto pt-4">
             <label htmlFor="leads-csv-upload" className="w-full block">
               <Button
@@ -157,4 +173,3 @@ export default function CSVUploadBar({ onUploadSuccess }: { onUploadSuccess?: ()
     </motion.div>
   );
 }
-

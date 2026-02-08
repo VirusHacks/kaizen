@@ -1,6 +1,6 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { z } from 'zod'
-import { db } from '../db.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import { db } from '../db.js';
 
 export function registerProjectTools(server: McpServer) {
   // ─── List all projects for a user ───
@@ -12,26 +12,28 @@ export function registerProjectTools(server: McpServer) {
       const projects = await db.project.findMany({
         where: {
           isArchived: false,
-          OR: [
-            { ownerId: userId },
-            { members: { some: { userId } } },
-          ],
+          OR: [{ ownerId: userId }, { members: { some: { userId } } }],
         },
         select: {
-          id: true, name: true, key: true, description: true,
+          id: true,
+          name: true,
+          key: true,
+          description: true,
           _count: { select: { issues: true, members: true, sprints: true } },
         },
         orderBy: { updatedAt: 'desc' },
-      })
+      });
 
       return {
-        content: [{
-          type: 'text' as const,
-          text: JSON.stringify(projects, null, 2),
-        }],
-      }
-    }
-  )
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify(projects, null, 2),
+          },
+        ],
+      };
+    },
+  );
 
   // ─── Get full project context ───
   server.tool(
@@ -50,10 +52,13 @@ export function registerProjectTools(server: McpServer) {
           },
           _count: { select: { issues: true, sprints: true } },
         },
-      })
+      });
 
       if (!project) {
-        return { content: [{ type: 'text' as const, text: 'Project not found' }], isError: true }
+        return {
+          content: [{ type: 'text' as const, text: 'Project not found' }],
+          isError: true,
+        };
       }
 
       const context = {
@@ -64,30 +69,40 @@ export function registerProjectTools(server: McpServer) {
         createdAt: project.createdAt.toISOString(),
         totalIssues: project._count.issues,
         totalSprints: project._count.sprints,
-        setup: project.setup ? {
-          startDate: project.setup.startDate?.toISOString() || null,
-          endDate: project.setup.endDate?.toISOString() || null,
-          teamSize: project.setup.teamSize,
-          techStack: project.setup.techStack,
-          vision: project.setup.vision,
-          aiInstructions: project.setup.aiInstructions,
-          githubRepoUrl: project.setup.githubRepoUrl,
-          githubRepoName: project.setup.githubRepoName,
-          githubRepoOwner: project.setup.githubRepoOwner,
-        } : null,
-        members: project.members.map((m) => ({
-          name: m.user.name,
-          email: m.user.email,
-          role: m.role,
-          departmentRole: m.departmentRole,
-        })),
-      }
+        setup: project.setup
+          ? {
+              startDate: project.setup.startDate?.toISOString() || null,
+              endDate: project.setup.endDate?.toISOString() || null,
+              teamSize: project.setup.teamSize,
+              techStack: project.setup.techStack,
+              vision: project.setup.vision,
+              aiInstructions: project.setup.aiInstructions,
+              githubRepoUrl: project.setup.githubRepoUrl,
+              githubRepoName: project.setup.githubRepoName,
+              githubRepoOwner: project.setup.githubRepoOwner,
+            }
+          : null,
+        members: project.members.map(
+          (m: {
+            role: string;
+            departmentRole: string;
+            user: { name: string | null; email: string | null };
+          }) => ({
+            name: m.user.name,
+            email: m.user.email,
+            role: m.role,
+            departmentRole: m.departmentRole,
+          }),
+        ),
+      };
 
       return {
-        content: [{ type: 'text' as const, text: JSON.stringify(context, null, 2) }],
-      }
-    }
-  )
+        content: [
+          { type: 'text' as const, text: JSON.stringify(context, null, 2) },
+        ],
+      };
+    },
+  );
 
   // ─── Get project coding standards / AI instructions ───
   server.tool(
@@ -98,29 +113,36 @@ export function registerProjectTools(server: McpServer) {
       const project = await db.project.findUnique({
         where: { id: projectId },
         select: {
-          name: true, key: true,
+          name: true,
+          key: true,
           setup: {
             select: { techStack: true, vision: true, aiInstructions: true },
           },
         },
-      })
+      });
 
       if (!project) {
-        return { content: [{ type: 'text' as const, text: 'Project not found' }], isError: true }
+        return {
+          content: [{ type: 'text' as const, text: 'Project not found' }],
+          isError: true,
+        };
       }
 
       const result = {
         project: `${project.name} (${project.key})`,
         techStack: project.setup?.techStack || 'Not specified',
         vision: project.setup?.vision || 'Not specified',
-        aiInstructions: project.setup?.aiInstructions || 'No specific instructions set',
-      }
+        aiInstructions:
+          project.setup?.aiInstructions || 'No specific instructions set',
+      };
 
       return {
-        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
-      }
-    }
-  )
+        content: [
+          { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+        ],
+      };
+    },
+  );
 
   // ─── Get project members ───
   server.tool(
@@ -131,23 +153,39 @@ export function registerProjectTools(server: McpServer) {
       const members = await db.projectMember.findMany({
         where: { projectId },
         include: {
-          user: { select: { clerkId: true, name: true, email: true, profileImage: true } },
+          user: {
+            select: {
+              clerkId: true,
+              name: true,
+              email: true,
+              profileImage: true,
+            },
+          },
         },
         orderBy: { joinedAt: 'asc' },
-      })
+      });
 
-      const result = members.map((m) => ({
-        userId: m.user.clerkId,
-        name: m.user.name,
-        email: m.user.email,
-        role: m.role,
-        departmentRole: m.departmentRole,
-        joinedAt: m.joinedAt.toISOString(),
-      }))
+      const result = members.map(
+        (m: {
+          role: string;
+          departmentRole: string;
+          joinedAt: Date;
+          user: { clerkId: string; name: string | null; email: string | null };
+        }) => ({
+          userId: m.user.clerkId,
+          name: m.user.name,
+          email: m.user.email,
+          role: m.role,
+          departmentRole: m.departmentRole,
+          joinedAt: m.joinedAt.toISOString(),
+        }),
+      );
 
       return {
-        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
-      }
-    }
-  )
+        content: [
+          { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+        ],
+      };
+    },
+  );
 }

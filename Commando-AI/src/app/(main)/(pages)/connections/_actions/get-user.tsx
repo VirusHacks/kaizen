@@ -8,7 +8,14 @@ export const getUserData = async (id: string) => {
       clerkId: id,
     },
     include: {
-      connections: true,
+      connections: {
+        include: {
+          DiscordWebhook: true,
+          Notion: true,
+          Slack: true,
+          GitHub: true,
+        },
+      },
     },
   })
 

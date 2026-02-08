@@ -1,9 +1,9 @@
 /**
  * Dependency Impact Analyzer
- * 
+ *
  * Analyzes how delays in one task cascade through dependent tasks.
  * Identifies critical paths and calculates total project impact.
- * 
+ *
  * Features:
  * - Dependency graph traversal
  * - Critical path identification
@@ -22,6 +22,14 @@ interface DependencyNode {
   children: DependencyNode[]; // Tasks that depend on this one
 }
 
+interface AffectedIssue {
+  issueId: string;
+  issueTitle: string;
+  delayDays: number;
+  newEstimatedDate: Date;
+  confidence: number; // 0-1
+}
+
 interface DependencyImpact {
   rootIssueId: string;
   rootIssueTitle: string;
@@ -33,18 +41,12 @@ interface DependencyImpact {
   recommendations: string[];
 }
 
-interface AffectedIssue {
-  issueId: string;
-  issueTitle: string;
-  delayDays: number;
-  newEstimatedDate: Date;
-  confidence: number; // 0-1
-}
-
 /**
  * Build dependency graph for a project
  */
-async function buildDependencyGraph(projectId: string): Promise<Map<string, DependencyNode>> {
+async function buildDependencyGraph(
+  projectId: string,
+): Promise<Map<string, DependencyNode>> {
   const issues = await db.issue.findMany({
     where: { projectId },
     include: {
@@ -83,17 +85,20 @@ async function buildDependencyGraph(projectId: string): Promise<Map<string, Depe
 /**
  * Find all descendants of a node (BFS traversal)
  */
-function findDescendants(node: DependencyNode, graph: Map<string, DependencyNode>): DependencyNode[] {
+function findDescendants(
+  node: DependencyNode,
+  graph: Map<string, DependencyNode>,
+): DependencyNode[] {
   const descendants: DependencyNode[] = [];
   const visited = new Set<string>();
   const queue: DependencyNode[] = [node];
 
   while (queue.length > 0) {
     const current = queue.shift()!;
-    
+
     if (visited.has(current.issueId)) continue;
     visited.add(current.issueId);
-    
+
     if (current.issueId !== node.issueId) {
       descendants.push(current);
     }
@@ -113,7 +118,7 @@ function findDescendants(node: DependencyNode, graph: Map<string, DependencyNode
  */
 function calculateCriticalPath(
   node: DependencyNode,
-  memo: Map<string, { length: number; path: string[] }> = new Map()
+  memo: Map<string, { length: number; path: string[] }> = new Map(),
 ): { length: number; path: string[] } {
   if (memo.has(node.issueId)) {
     return memo.get(node.issueId)!;
@@ -130,7 +135,7 @@ function calculateCriticalPath(
 
   // Find longest path among children
   let maxPath = { length: 0, path: [] as string[] };
-  
+
   node.children.forEach((child) => {
     const childPath = calculateCriticalPath(child, memo);
     if (childPath.length > maxPath.length) {
@@ -142,7 +147,7 @@ function calculateCriticalPath(
     length: node.estimatedHours / 8 + maxPath.length,
     path: [node.issueId, ...maxPath.path],
   };
-  
+
   memo.set(node.issueId, result);
   return result;
 }
@@ -153,7 +158,7 @@ function calculateCriticalPath(
 function calculateDelayPropagation(
   rootNode: DependencyNode,
   delayDays: number,
-  graph: Map<string, DependencyNode>
+  graph: Map<string, DependencyNode>,
 ): AffectedIssue[] {
   const affected: AffectedIssue[] = [];
   const descendants = findDescendants(rootNode, graph);
@@ -161,22 +166,31 @@ function calculateDelayPropagation(
   // Simple model: delay propagates 100% to immediate children,
   // then decays by 20% for each level deeper
   const visited = new Set<string>([rootNode.issueId]);
-  const queue: { node: DependencyNode; inheritedDelay: number; depth: number }[] = 
-    rootNode.children.map(child => ({ node: child, inheritedDelay: delayDays, depth: 1 }));
+  const queue: {
+    node: DependencyNode;
+    inheritedDelay: number;
+    depth: number;
+  }[] = rootNode.children.map((child) => ({
+    node: child,
+    inheritedDelay: delayDays,
+    depth: 1,
+  }));
 
   while (queue.length > 0) {
     const { node, inheritedDelay, depth } = queue.shift()!;
-    
+
     if (visited.has(node.issueId)) continue;
     visited.add(node.issueId);
 
     // Delay decays by 20% per level (parallel work can absorb some delay)
     const actualDelay = inheritedDelay * Math.pow(0.8, depth - 1);
-    
+
     // Calculate new estimated date (simplified)
     const taskDurationDays = node.estimatedHours / 8;
     const newEstimatedDate = new Date();
-    newEstimatedDate.setDate(newEstimatedDate.getDate() + taskDurationDays + actualDelay);
+    newEstimatedDate.setDate(
+      newEstimatedDate.getDate() + taskDurationDays + actualDelay,
+    );
 
     affected.push({
       issueId: node.issueId,
@@ -188,7 +202,11 @@ function calculateDelayPropagation(
 
     // Add children to queue with increased depth
     node.children.forEach((child) => {
-      queue.push({ node: child, inheritedDelay: actualDelay, depth: depth + 1 });
+      queue.push({
+        node: child,
+        inheritedDelay: actualDelay,
+        depth: depth + 1,
+      });
     });
   }
 
@@ -202,14 +220,14 @@ function calculateRiskScore(
   rootDelay: number,
   totalImpact: number,
   affectedCount: number,
-  criticalPathLength: number
+  criticalPathLength: number,
 ): number {
   // Factors:
   // 1. Root delay size (0-30 points)
   // 2. Total cascaded impact (0-30 points)
   // 3. Number of affected issues (0-20 points)
   // 4. Critical path involvement (0-20 points)
-  
+
   const delayScore = Math.min(30, (rootDelay / 10) * 30);
   const impactScore = Math.min(30, (totalImpact / 50) * 30);
   const breadthScore = Math.min(20, (affectedCount / 20) * 20);
@@ -225,32 +243,46 @@ function generateRecommendations(impact: DependencyImpact): string[] {
   const recommendations: string[] = [];
 
   if (impact.riskScore > 70) {
-    recommendations.push('🚨 CRITICAL: This delay has severe project-wide impact. Consider escalating immediately.');
+    recommendations.push(
+      '🚨 CRITICAL: This delay has severe project-wide impact. Consider escalating immediately.',
+    );
   }
 
   if (impact.affectedIssues.length > 10) {
-    recommendations.push(`📊 This delay affects ${impact.affectedIssues.length} tasks. Consider re-planning the sprint.`);
+    recommendations.push(
+      `📊 This delay affects ${impact.affectedIssues.length} tasks. Consider re-planning the sprint.`,
+    );
   }
 
   if (impact.criticalPath.length > 0) {
-    recommendations.push('⚠️ This task is on the critical path. Any delay directly impacts delivery date.');
+    recommendations.push(
+      '⚠️ This task is on the critical path. Any delay directly impacts delivery date.',
+    );
   }
 
   if (impact.totalImpact > impact.rootDelay * 3) {
-    recommendations.push('🔗 Strong cascade effect detected. Focus on unblocking this task first.');
+    recommendations.push(
+      '🔗 Strong cascade effect detected. Focus on unblocking this task first.',
+    );
   }
 
-  if (impact.affectedIssues.some(a => a.confidence < 0.6)) {
-    recommendations.push('📉 High uncertainty in downstream impact. Monitor affected tasks closely.');
+  if (impact.affectedIssues.some((a) => a.confidence < 0.6)) {
+    recommendations.push(
+      '📉 High uncertainty in downstream impact. Monitor affected tasks closely.',
+    );
   }
 
   // Mitigation strategies
   if (impact.affectedIssues.length > 5) {
-    recommendations.push('💡 Consider parallelizing independent tasks to reduce total delay.');
+    recommendations.push(
+      '💡 Consider parallelizing independent tasks to reduce total delay.',
+    );
   }
 
   if (impact.riskScore > 50) {
-    recommendations.push('👥 Consider adding resources to this task to minimize delay.');
+    recommendations.push(
+      '👥 Consider adding resources to this task to minimize delay.',
+    );
   }
 
   return recommendations;
@@ -262,7 +294,7 @@ function generateRecommendations(impact: DependencyImpact): string[] {
 export async function analyzeDependencyImpact(
   projectId: string,
   issueId: string,
-  delayDays: number
+  delayDays: number,
 ): Promise<DependencyImpact> {
   // Build dependency graph
   const graph = await buildDependencyGraph(projectId);
@@ -279,14 +311,15 @@ export async function analyzeDependencyImpact(
   const affectedIssues = calculateDelayPropagation(rootNode, delayDays, graph);
 
   // Calculate total impact
-  const totalImpact = affectedIssues.reduce((sum, issue) => sum + issue.delayDays, 0) + delayDays;
+  const totalImpact =
+    affectedIssues.reduce((sum, issue) => sum + issue.delayDays, 0) + delayDays;
 
   // Calculate risk score
   const riskScore = calculateRiskScore(
     delayDays,
     totalImpact,
     affectedIssues.length,
-    criticalPath.length
+    criticalPath.length,
   );
 
   const impact: DependencyImpact = {
@@ -309,13 +342,18 @@ export async function analyzeDependencyImpact(
 /**
  * Find all critical paths in a project
  */
-export async function findCriticalPaths(projectId: string): Promise<DependencyNode[][]> {
+export async function findCriticalPaths(
+  projectId: string,
+): Promise<DependencyNode[][]> {
   const graph = await buildDependencyGraph(projectId);
   const criticalPaths: DependencyNode[][] = [];
 
   // Find root nodes (nodes with no parents)
   const rootNodes = Array.from(graph.values()).filter(
-    (node) => !Array.from(graph.values()).some((n) => n.children.some((c) => c.issueId === node.issueId))
+    (node) =>
+      !Array.from(graph.values()).some((n) =>
+        n.children.some((c) => c.issueId === node.issueId),
+      ),
   );
 
   // Calculate critical path from each root
@@ -338,7 +376,7 @@ export async function findCriticalPaths(projectId: string): Promise<DependencyNo
  */
 export async function saveDependencyChain(
   projectId: string,
-  impact: DependencyImpact
+  impact: DependencyImpact,
 ): Promise<string> {
   const chain = await db.dependencyChain.create({
     data: {

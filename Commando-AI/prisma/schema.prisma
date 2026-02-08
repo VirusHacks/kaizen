@@ -97,13 +97,15 @@ model Notion {
 }
 
 model GitHub {
-  id          String        @id @default(uuid())
-  accessToken String
-  username    String
+  id             String        @id @default(uuid())
+  accessToken    String
+  refreshToken   String?       // GitHub App OAuth refresh token
+  tokenExpiresAt DateTime?     // When the access token expires
+  username       String
 
   // GitHub App fields
-  installationId Int?       // GitHub App installation ID
-  appSlug        String?    // GitHub App slug (for URLs)
+  installationId Int?          // GitHub App installation ID
+  appSlug        String?       // GitHub App slug (for URLs)
 
   User        User          @relation(fields: [userId], references: [clerkId])
   userId      String
@@ -112,7 +114,7 @@ model GitHub {
 
 model Connections {
   id               String          @id @default(uuid())
-  type             String          @unique
+  type             String
   DiscordWebhook   DiscordWebhook? @relation(fields: [discordWebhookId], references: [id])
   discordWebhookId String?
   Notion           Notion?         @relation(fields: [notionId], references: [id])
@@ -123,6 +125,8 @@ model Connections {
   slackId          String?
   GitHub           GitHub?         @relation(fields: [githubId], references: [id])
   githubId         String?
+
+  @@unique([type, userId])
 }
 
 model Workflows {

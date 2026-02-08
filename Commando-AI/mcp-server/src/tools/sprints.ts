@@ -1,6 +1,6 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { z } from 'zod'
-import { db } from '../db.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import { db } from '../db.js';
 
 export function registerSprintTools(server: McpServer) {
   // ─── Get all sprints ───
@@ -19,29 +19,50 @@ export function registerSprintTools(server: McpServer) {
           },
         },
         orderBy: { createdAt: 'desc' },
-      })
+      });
 
-      const result = sprints.map((s) => ({
-        id: s.id,
-        name: s.name,
-        goal: s.goal,
-        status: s.status,
-        startDate: s.startDate?.toISOString() || null,
-        endDate: s.endDate?.toISOString() || null,
-        totalIssues: s._count.issues,
-        progress: {
-          todo: s.issues.filter((i) => i.status === 'TODO').length,
-          inProgress: s.issues.filter((i) => i.status === 'IN_PROGRESS').length,
-          inReview: s.issues.filter((i) => i.status === 'IN_REVIEW').length,
-          done: s.issues.filter((i) => i.status === 'DONE').length,
-        },
-      }))
+      const result = sprints.map(
+        (s: {
+          id: string;
+          name: string;
+          goal: string | null;
+          status: string;
+          startDate: Date | null;
+          endDate: Date | null;
+          _count: { issues: number };
+          issues: Array<{ status: string }>;
+        }) => ({
+          id: s.id,
+          name: s.name,
+          goal: s.goal,
+          status: s.status,
+          startDate: s.startDate?.toISOString() || null,
+          endDate: s.endDate?.toISOString() || null,
+          totalIssues: s._count.issues,
+          progress: {
+            todo: s.issues.filter(
+              (i: { status: string }) => i.status === 'TODO',
+            ).length,
+            inProgress: s.issues.filter(
+              (i: { status: string }) => i.status === 'IN_PROGRESS',
+            ).length,
+            inReview: s.issues.filter(
+              (i: { status: string }) => i.status === 'IN_REVIEW',
+            ).length,
+            done: s.issues.filter(
+              (i: { status: string }) => i.status === 'DONE',
+            ).length,
+          },
+        }),
+      );
 
       return {
-        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
-      }
-    }
-  )
+        content: [
+          { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+        ],
+      };
+    },
+  );
 
   // ─── Get active sprint details ───
   server.tool(
@@ -61,15 +82,19 @@ export function registerSprintTools(server: McpServer) {
             orderBy: [{ status: 'asc' }, { priority: 'desc' }],
           },
         },
-      })
+      });
 
       if (!sprint) {
-        return { content: [{ type: 'text' as const, text: 'No active sprint found' }] }
+        return {
+          content: [{ type: 'text' as const, text: 'No active sprint found' }],
+        };
       }
 
       const daysRemaining = sprint.endDate
-        ? Math.ceil((sprint.endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        : null
+        ? Math.ceil(
+            (sprint.endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+          )
+        : null;
 
       const result = {
         id: sprint.id,
@@ -78,30 +103,52 @@ export function registerSprintTools(server: McpServer) {
         startDate: sprint.startDate?.toISOString() || null,
         endDate: sprint.endDate?.toISOString() || null,
         daysRemaining,
-        issues: sprint.issues.map((i) => ({
-          id: i.id,
-          key: `${i.project.key}-${i.number}`,
-          title: i.title,
-          type: i.type,
-          status: i.status,
-          priority: i.priority,
-          assignee: i.assignee?.name || 'Unassigned',
-          assigneeId: i.assignee?.clerkId || null,
-        })),
+        issues: sprint.issues.map(
+          (i: {
+            id: string;
+            number: number;
+            title: string;
+            type: string;
+            status: string;
+            priority: string;
+            assignee: { name: string | null; clerkId: string } | null;
+            project: { key: string };
+          }) => ({
+            id: i.id,
+            key: `${i.project.key}-${i.number}`,
+            title: i.title,
+            type: i.type,
+            status: i.status,
+            priority: i.priority,
+            assignee: i.assignee?.name || 'Unassigned',
+            assigneeId: i.assignee?.clerkId || null,
+          }),
+        ),
         progress: {
           total: sprint.issues.length,
-          done: sprint.issues.filter((i) => i.status === 'DONE').length,
-          completionRate: sprint.issues.length > 0
-            ? Math.round((sprint.issues.filter((i) => i.status === 'DONE').length / sprint.issues.length) * 100)
-            : 0,
+          done: sprint.issues.filter(
+            (i: { status: string }) => i.status === 'DONE',
+          ).length,
+          completionRate:
+            sprint.issues.length > 0
+              ? Math.round(
+                  (sprint.issues.filter(
+                    (i: { status: string }) => i.status === 'DONE',
+                  ).length /
+                    sprint.issues.length) *
+                    100,
+                )
+              : 0,
         },
-      }
+      };
 
       return {
-        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
-      }
-    }
-  )
+        content: [
+          { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+        ],
+      };
+    },
+  );
 
   // ─── Get backlog (unassigned to sprint) ───
   server.tool(
@@ -112,26 +159,44 @@ export function registerSprintTools(server: McpServer) {
       const issues = await db.issue.findMany({
         where: { projectId, sprintId: null, isArchived: false },
         select: {
-          id: true, number: true, title: true, type: true, status: true, priority: true,
+          id: true,
+          number: true,
+          title: true,
+          type: true,
+          status: true,
+          priority: true,
           assignee: { select: { name: true } },
           project: { select: { key: true } },
         },
         orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
-      })
+      });
 
-      const result = issues.map((i) => ({
-        id: i.id,
-        key: `${i.project.key}-${i.number}`,
-        title: i.title,
-        type: i.type,
-        status: i.status,
-        priority: i.priority,
-        assignee: i.assignee?.name || 'Unassigned',
-      }))
+      const result = issues.map(
+        (i: {
+          id: string;
+          number: number;
+          title: string;
+          type: string;
+          status: string;
+          priority: string;
+          assignee: { name: string | null } | null;
+          project: { key: string };
+        }) => ({
+          id: i.id,
+          key: `${i.project.key}-${i.number}`,
+          title: i.title,
+          type: i.type,
+          status: i.status,
+          priority: i.priority,
+          assignee: i.assignee?.name || 'Unassigned',
+        }),
+      );
 
       return {
-        content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
-      }
-    }
-  )
+        content: [
+          { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+        ],
+      };
+    },
+  );
 }

@@ -1,37 +1,40 @@
-import { onAuthenticateUser } from "@/actions/auth";
-import { redirect } from "next/navigation";
-import { getNewLeads, getConversionStats } from "@/action/newLeads";
-import NewLeadsList from "./_components/NewLeadsList";
-import ConversionRateChart from "./_components/ConversionRateChart";
-import OfferMessage from "./_components/OfferMessage";
-import CSVUploadBar from "./_components/CSVUploadBar";
-import CreditsStats from "./_components/CreditsStats";
-import LeadConversionFunnel from "./_components/LeadConversionFunnel";
+import { onAuthenticateUser } from '@/actions/auth';
+import { redirect } from 'next/navigation';
+import { getNewLeads, getConversionStats } from '@/actions/newLeads';
+import NewLeadsList from './_components/NewLeadsList';
+import ConversionRateChart from './_components/ConversionRateChart';
+import OfferMessage from './_components/OfferMessage';
+import CSVUploadBar from './_components/CSVUploadBar';
+import CreditsStats from './_components/CreditsStats';
+import LeadConversionFunnel from './_components/LeadConversionFunnel';
 
 export const dynamic = 'force-dynamic';
 
 const NewLeadsPage = async () => {
   const checkUser = await onAuthenticateUser();
   if (!checkUser.user) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   const leadsResponse = await getNewLeads();
   const statsResponse = await getConversionStats();
 
   if (leadsResponse.status === 403 || statsResponse.status === 403) {
-    redirect("/sign-in");
+    redirect('/sign-in');
   }
 
   const leads = leadsResponse.status === 200 ? leadsResponse.leads : [];
-  const stats = statsResponse.status === 200 ? statsResponse.stats : {
-    totalLeads: 0,
-    contactedLeads: 0,
-    qualifiedLeads: 0,
-    convertedLeads: 0,
-    conversionRate: 0,
-    creditsEarned: 0,
-  };
+  const stats =
+    statsResponse.status === 200
+      ? statsResponse.stats
+      : {
+          totalLeads: 0,
+          contactedLeads: 0,
+          qualifiedLeads: 0,
+          convertedLeads: 0,
+          conversionRate: 0,
+          creditsEarned: 0,
+        };
 
   return (
     <div className="w-full min-h-screen bg-black space-y-8 pb-12">
@@ -83,4 +86,3 @@ const NewLeadsPage = async () => {
 };
 
 export default NewLeadsPage;
-
