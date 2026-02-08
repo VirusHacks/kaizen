@@ -10,6 +10,7 @@ type Params = { params: Promise<{ owner: string; repo: string }> };
 /**
  * GET /api/github/repos/[owner]/[repo]/pulls
  * List pull requests for a repository.
+ * Supports ?state=open|closed|all&page=1&per_page=30&sort=updated&direction=desc
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
@@ -41,8 +42,6 @@ export async function GET(req: NextRequest, { params }: Params) {
       owner,
       repo,
       state,
-      sort: 'updated',
-      direction: 'desc',
       per_page: perPage,
       page,
     });

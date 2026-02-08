@@ -157,6 +157,46 @@ export async function exchangeCodeForToken(code: string) {
 }
 
 /**
+ * Refresh a GitHub App user-to-server token using a refresh token.
+ * Only works for GitHub App OAuth (not standard OAuth Apps — those don't expire).
+ */
+export async function refreshAccessToken(refreshToken: string) {
+  const clientId = getGitHubClientId()
+  const clientSecret = getGitHubClientSecret()
+
+  if (!clientId || !clientSecret) {
+    throw new Error('GitHub OAuth not configured')
+  }
+
+  const response = await fetch('https://github.com/login/oauth/access_token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    throw new Error(`GitHub token refresh error: ${data.error_description || data.error}`)
+  }
+
+  return {
+    accessToken: data.access_token as string,
+    refreshToken: data.refresh_token as string | undefined,
+    expiresIn: data.expires_in as number | undefined,
+    tokenType: data.token_type as string,
+  }
+}
+
+/**
  * Get the authenticated user's profile using their access token.
  */
 export async function getUserProfile(accessToken: string) {

@@ -3,15 +3,58 @@
 import { auth } from '@clerk/nextjs/server'
 import { getGitHubConnection } from '../connections/_actions/github-connection'
 import { Octokit } from '@octokit/rest'
-import { isGitHubAppConfigured, getInstallationOctokit } from '@/lib/github-app'
+import { isGitHubAppConfigured, getInstallationOctokit, refreshAccessToken } from '@/lib/github-app'
+import { db } from '@/lib/db'
 
 // ==========================================
 // CLIENT SETUP
 // ==========================================
 
 /**
+ * Refresh token if expired, return a valid access token.
+ */
+async function getValidToken(github: { id: string; accessToken: string; refreshToken?: string | null; tokenExpiresAt?: Date | null; userId: string }): Promise<string> {
+  // If no expiry set, token doesn't expire (standard OAuth)
+  if (!github.tokenExpiresAt) return github.accessToken
+
+  // Check if expired (with 5min buffer)
+  const fiveMinFromNow = new Date(Date.now() + 5 * 60 * 1000)
+  if (github.tokenExpiresAt > fiveMinFromNow) return github.accessToken
+
+  // Token expired — refresh it
+  if (!github.refreshToken) {
+    console.warn('[GITHUB_CLIENT] Token expired but no refresh token')
+    return github.accessToken
+  }
+
+  try {
+    console.log('[GITHUB_CLIENT] Refreshing expired token for:', github.userId)
+    const newTokens = await refreshAccessToken(github.refreshToken)
+    const tokenExpiresAt = newTokens.expiresIn
+      ? new Date(Date.now() + newTokens.expiresIn * 1000)
+      : null
+
+    await db.gitHub.update({
+      where: { id: github.id },
+      data: {
+        accessToken: newTokens.accessToken,
+        ...(newTokens.refreshToken ? { refreshToken: newTokens.refreshToken } : {}),
+        tokenExpiresAt,
+      },
+    })
+
+    return newTokens.accessToken
+  } catch (err) {
+    console.error('[GITHUB_CLIENT] Token refresh failed:', err)
+    return github.accessToken
+  }
+}
+
+/**
  * Get authenticated Octokit client for the current user.
  * Prefers GitHub App installation token if available, falls back to user OAuth token.
+ * Auto-refreshes expired tokens.
+ * Use this for read operations (list repos, get issues, etc.).
  */
 export async function getGitHubClient() {
   const { userId } = await auth()
@@ -35,13 +78,44 @@ export async function getGitHubClient() {
     }
   }
 
-  // Fall back to user's personal access token (OAuth App flow)
-  if (!github.accessToken) {
+  // Fall back to user's personal access token (OAuth App flow) with auto-refresh
+  const accessToken = await getValidToken(github)
+  if (!accessToken) {
     throw new Error('No GitHub access token found. Please reconnect GitHub.')
   }
 
   return new Octokit({
-    auth: github.accessToken,
+    auth: accessToken,
+  })
+}
+
+/**
+ * Get Octokit client using ONLY the user's OAuth token (never installation token).
+ * Required for user-scoped endpoints that don't work with installation tokens:
+ *   - POST /user/repos (create repo)
+ *   - DELETE /repos/{owner}/{repo}
+ * Auto-refreshes expired tokens.
+ */
+export async function getUserOctokitClient() {
+  const { userId } = await auth()
+  
+  if (!userId) {
+    throw new Error('User not authenticated')
+  }
+
+  const github = await getGitHubConnection(userId)
+  
+  if (!github) {
+    throw new Error('GitHub not connected. Please connect GitHub from the Connections page.')
+  }
+
+  const accessToken = await getValidToken(github)
+  if (!accessToken) {
+    throw new Error('No GitHub access token found. Please reconnect GitHub.')
+  }
+
+  return new Octokit({
+    auth: accessToken,
   })
 }
 
@@ -179,7 +253,8 @@ export async function createRepository(options: {
   licenseTemplate?: string
 }) {
   try {
-    const octokit = await getGitHubClient()
+    // Must use user OAuth token — installation tokens can't create repos
+    const octokit = await getUserOctokitClient()
     const { data } = await octokit.repos.createForAuthenticatedUser({
       name: options.name,
       description: options.description,
@@ -216,7 +291,8 @@ export async function createOrgRepository(
   }
 ) {
   try {
-    const octokit = await getGitHubClient()
+    // Must use user OAuth token — installation tokens can't create org repos
+    const octokit = await getUserOctokitClient()
     const { data } = await octokit.repos.createInOrg({
       org,
       name: options.name,
@@ -236,7 +312,8 @@ export async function createOrgRepository(
  */
 export async function deleteRepository(owner: string, repo: string) {
   try {
-    const octokit = await getGitHubClient()
+    // Must use user OAuth token — installation tokens can't delete repos
+    const octokit = await getUserOctokitClient()
     await octokit.repos.delete({ owner, repo })
     return { success: true, error: null }
   } catch (error) {

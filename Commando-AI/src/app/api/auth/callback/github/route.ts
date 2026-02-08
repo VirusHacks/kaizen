@@ -63,6 +63,13 @@ export async function GET(req: NextRequest) {
     if (appSlug) {
       params.set('github_app_slug', appSlug)
     }
+    // Pass refresh token and expiry if present (GitHub App OAuth tokens expire)
+    if (tokenResult.refreshToken) {
+      params.set('github_refresh_token', tokenResult.refreshToken)
+    }
+    if (tokenResult.expiresIn) {
+      params.set('github_token_expires_in', String(tokenResult.expiresIn))
+    }
 
     return NextResponse.redirect(`${baseUrl}/connections?${params.toString()}`)
   } catch (error) {

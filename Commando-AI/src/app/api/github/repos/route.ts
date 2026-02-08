@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/github/repos
- * List repositories accessible to the user's GitHub App installation.
+ * List repositories accessible to the authenticated user.
+ * Supports ?page=1&per_page=30&sort=updated&type=all query params.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/github/repos
- * Create a new repository using the GitHub App installation token.
+ * Create a new repository.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -84,20 +85,22 @@ export async function POST(req: NextRequest) {
 
     let result;
     if (org) {
-      result = await userOctokit.repos.createInOrg({
+      const res = await userOctokit.repos.createInOrg({
         org,
         name,
         description: description || '',
         private: isPrivate ?? false,
         auto_init: autoInit ?? true,
       });
+      result = res;
     } else {
-      result = await userOctokit.repos.createForAuthenticatedUser({
+      const res = await userOctokit.repos.createForAuthenticatedUser({
         name,
         description: description || '',
         private: isPrivate ?? false,
         auto_init: autoInit ?? true,
       });
+      result = res;
     }
 
     return NextResponse.json(
@@ -119,7 +122,6 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[GITHUB_REPOS_POST]', error);
 
-    // Handle specific GitHub errors
     if (error?.status === 422) {
       return NextResponse.json(
         { error: 'Repository name already exists or is invalid' },
@@ -133,6 +135,15 @@ export async function POST(req: NextRequest) {
             'Insufficient permissions. The GitHub App may need additional scopes.',
         },
         { status: 403 },
+      );
+    }
+    if (error?.status === 401) {
+      return NextResponse.json(
+        {
+          error:
+            'GitHub token expired. Please reconnect GitHub from Connections.',
+        },
+        { status: 401 },
       );
     }
 

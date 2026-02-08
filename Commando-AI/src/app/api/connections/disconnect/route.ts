@@ -56,12 +56,26 @@ export async function POST(request: NextRequest) {
         await db.discordWebhook.deleteMany({
           where: { userId: userId }
         })
+        // Also delete the connection record
+        await db.connections.deleteMany({
+          where: { 
+            userId: userId,
+            type: 'Discord'
+          }
+        })
         break
 
       case 'Slack':
         // Clear Slack connection from database
         await db.slack.deleteMany({
           where: { userId: userId }
+        })
+        // Also delete the connection record
+        await db.connections.deleteMany({
+          where: { 
+            userId: userId,
+            type: 'Slack'
+          }
         })
         break
 
@@ -70,12 +84,26 @@ export async function POST(request: NextRequest) {
         await db.notion.deleteMany({
           where: { userId: userId }
         })
+        // Also delete the connection record
+        await db.connections.deleteMany({
+          where: { 
+            userId: userId,
+            type: 'Notion'
+          }
+        })
         break
 
       case 'GitHub':
         // Clear GitHub connection from database
         await db.gitHub.deleteMany({
           where: { userId: userId }
+        })
+        // Also delete the connection record
+        await db.connections.deleteMany({
+          where: { 
+            userId: userId,
+            type: 'GitHub'
+          }
         })
         break
 

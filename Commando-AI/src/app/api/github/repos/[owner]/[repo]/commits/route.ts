@@ -10,6 +10,7 @@ type Params = { params: Promise<{ owner: string; repo: string }> };
 /**
  * GET /api/github/repos/[owner]/[repo]/commits
  * List commits for a repository.
+ * Supports ?sha=branch&page=1&per_page=30&author=username&path=filepath&since=ISO&until=ISO
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
