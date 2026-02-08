@@ -38,8 +38,8 @@ export default function DeliveryEngineDashboardClient({ projectId }: DeliveryEng
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Predictive Delivery Engine</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-2xl font-semibold">Predictive Delivery Engine</h1>
+        <p className="text-base text-muted-foreground mt-2">
           AI-powered delivery predictions with 90%+ confidence for sales commitments
         </p>
       </div>
@@ -49,7 +49,7 @@ export default function DeliveryEngineDashboardClient({ projectId }: DeliveryEng
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Delivery Rate</CardTitle>
+              <CardTitle className="text-base font-semibold">Delivery Rate</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
@@ -62,7 +62,7 @@ export default function DeliveryEngineDashboardClient({ projectId }: DeliveryEng
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">At Risk</CardTitle>
+              <CardTitle className="text-base font-semibold">At Risk</CardTitle>
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
@@ -73,7 +73,7 @@ export default function DeliveryEngineDashboardClient({ projectId }: DeliveryEng
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Delivery</CardTitle>
+              <CardTitle className="text-base font-semibold">Avg Delivery</CardTitle>
               <Clock className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
@@ -89,7 +89,7 @@ export default function DeliveryEngineDashboardClient({ projectId }: DeliveryEng
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue at Risk</CardTitle>
+              <CardTitle className="text-base font-semibold">Revenue at Risk</CardTitle>
               <DollarSign className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>

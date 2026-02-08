@@ -31,7 +31,7 @@ const IssuesPage = async ({ params }: Props) => {
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Issues</h1>
+                <h1 className="text-2xl font-semibold">Issues</h1>
                 <Badge variant="secondary" className="font-mono text-sm">
                   {project.key}
                 </Badge>

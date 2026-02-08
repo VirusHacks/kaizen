@@ -23,6 +23,17 @@ import {
   Brain,
   Target,
   Loader2,
+  DollarSign,
+  TrendingDown,
+  TrendingUp,
+  HeartPulse,
+  Gauge,
+  Sparkles,
+  CircleDollarSign,
+  ArrowDownRight,
+  ArrowUpRight,
+  Lightbulb,
+  PieChart,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -33,8 +44,11 @@ import {
   handleDecisionReview,
   toggleAgentStatus,
   triggerAgentThink,
+  runCostOptimizationAnalysis,
 } from '../_actions/agent-actions'
+import type { CostEstimationData, SprintHealthData } from '../_actions/agent-actions'
 import type { AgentDecisionStatus } from '@prisma/client'
+import { Progress } from '@/components/ui/progress'
 
 // ==========================================
 // Types
@@ -114,6 +128,8 @@ type DashboardData = {
 type Props = {
   data: DashboardData
   projectId: string
+  costData: CostEstimationData | null
+  healthData: SprintHealthData | null
 }
 
 // ==========================================
@@ -158,10 +174,13 @@ function timeAgo(dateStr: string): string {
 // Main Dashboard Component
 // ==========================================
 
-export default function AgentDashboardClient({ data, projectId }: Props) {
+export default function AgentDashboardClient({ data, projectId, costData, healthData }: Props) {
   const [isPending, startTransition] = useTransition()
   const [expandedDecision, setExpandedDecision] = useState<string | null>(null)
   const [cycleRunning, setCycleRunning] = useState(false)
+  const [aiAnalysis, setAiAnalysis] = useState<{ analysis: string; suggestions: { title: string; impact: string; effort: string; saving: string }[] } | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState<'agents' | 'cost' | 'health'>('agents')
 
   const handlePlanningCycle = () => {
     console.log('[CLIENT] handlePlanningCycle called, projectId:', projectId)
@@ -240,6 +259,25 @@ export default function AgentDashboardClient({ data, projectId }: Props) {
     })
   }
 
+  const handleRunCostAI = () => {
+    setAiLoading(true)
+    startTransition(async () => {
+      try {
+        const result = await runCostOptimizationAnalysis(projectId)
+        setAiAnalysis(result)
+        if (result.error) {
+          toast.error('AI analysis partial', { description: result.error })
+        } else {
+          toast.success('Cost optimization analysis complete')
+        }
+      } catch (err: any) {
+        toast.error('Failed to run AI analysis', { description: err.message })
+      } finally {
+        setAiLoading(false)
+      }
+    })
+  }
+
   return (
     <div className="px-6 py-6 space-y-6 max-w-[1400px] mx-auto w-full">
       {/* Summary Stats */}
@@ -291,6 +329,30 @@ export default function AgentDashboardClient({ data, projectId }: Props) {
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-fit">
+        {([
+          { key: 'agents' as const, label: 'Agent Swarm', icon: Bot },
+          { key: 'cost' as const, label: 'Cost Optimization', icon: DollarSign },
+          { key: 'health' as const, label: 'Sprint Health', icon: HeartPulse },
+        ]).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-xs font-medium transition-all ${
+              activeTab === tab.key
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <tab.icon className="h-3.5 w-3.5" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* AGENTS TAB */}
+      {activeTab === 'agents' && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Agent Roster + Approval Queue */}
         <div className="lg:col-span-1 space-y-6">
@@ -454,6 +516,474 @@ export default function AgentDashboardClient({ data, projectId }: Props) {
           </Card>
         </div>
       </div>
+      )}
+
+      {/* COST OPTIMIZATION TAB */}
+      {activeTab === 'cost' && (
+        <CostOptimizationPanel
+          costData={costData}
+          aiAnalysis={aiAnalysis}
+          aiLoading={aiLoading}
+          onRunAI={handleRunCostAI}
+          isPending={isPending}
+        />
+      )}
+
+      {/* SPRINT HEALTH TAB */}
+      {activeTab === 'health' && (
+        <SprintHealthPanel healthData={healthData} />
+      )}
+    </div>
+  )
+}
+
+// ==========================================
+// Cost Optimization Panel
+// ==========================================
+
+function CostOptimizationPanel({
+  costData,
+  aiAnalysis,
+  aiLoading,
+  onRunAI,
+  isPending,
+}: {
+  costData: CostEstimationData | null
+  aiAnalysis: { analysis: string; suggestions: { title: string; impact: string; effort: string; saving: string }[] } | null
+  aiLoading: boolean
+  onRunAI: () => void
+  isPending: boolean
+}) {
+  if (!costData) {
+    return (
+      <div className="text-center py-16 space-y-3">
+        <DollarSign className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+        <p className="text-sm text-muted-foreground">Cost data unavailable for this project.</p>
+      </div>
+    )
+  }
+
+  const isOverBudget = costData.projectedTotal > costData.totalTeamCostPerSprint * 1.1
+  const overrunPercent = costData.totalTeamCostPerSprint > 0
+    ? Math.round(((costData.projectedTotal / costData.totalTeamCostPerSprint) - 1) * 100)
+    : 0
+
+  return (
+    <div className="space-y-6">
+      {/* Cost KPI Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-md bg-emerald-500/10">
+                <CircleDollarSign className="h-4 w-4 text-emerald-500" />
+              </div>
+              <span className="text-xs text-muted-foreground">Sprint Budget</span>
+            </div>
+            <p className="text-xl font-bold">${costData.totalTeamCostPerSprint.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Spent: ${costData.spentSoFar.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-border/50 backdrop-blur-sm ${isOverBudget ? 'bg-red-500/5 border-red-500/20' : 'bg-card/50'}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`p-1.5 rounded-md ${isOverBudget ? 'bg-red-500/10' : 'bg-blue-500/10'}`}>
+                <TrendingUp className={`h-4 w-4 ${isOverBudget ? 'text-red-500' : 'text-blue-500'}`} />
+              </div>
+              <span className="text-xs text-muted-foreground">Projected Cost</span>
+            </div>
+            <p className="text-xl font-bold">${costData.projectedTotal.toLocaleString()}</p>
+            {isOverBudget && (
+              <p className="text-[10px] text-red-400 mt-1 flex items-center gap-1">
+                <ArrowUpRight className="h-3 w-3" />
+                {overrunPercent}% over budget
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-md bg-amber-500/10">
+                <Activity className="h-4 w-4 text-amber-500" />
+              </div>
+              <span className="text-xs text-muted-foreground">Burn Rate</span>
+            </div>
+            <p className="text-xl font-bold">${costData.burnRate.toLocaleString()}<span className="text-xs text-muted-foreground font-normal">/day</span></p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-md bg-purple-500/10">
+                <PieChart className="h-4 w-4 text-purple-500" />
+              </div>
+              <span className="text-xs text-muted-foreground">Cost Efficiency</span>
+            </div>
+            <p className="text-xl font-bold">{costData.costEfficiency}<span className="text-xs text-muted-foreground font-normal"> tasks/$1k</span></p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Team Cost Breakdown */}
+        <Card className="lg:col-span-1 border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-blue-500" />
+              Team Cost Breakdown
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {costData.memberCosts.map((m) => {
+                const pct = costData.totalTeamCostPerSprint > 0
+                  ? Math.round((m.cost / costData.totalTeamCostPerSprint) * 100)
+                  : 0
+                return (
+                  <div key={m.userId} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium truncate max-w-[120px]">{m.userName}</span>
+                      <span className="text-xs font-mono text-muted-foreground">${m.cost.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                          style={{ width: `${Math.min(100, pct)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground w-8 text-right">{pct}%</span>
+                    </div>
+                    <div className="flex gap-3 text-[10px] text-muted-foreground">
+                      <span>${m.hourlyRate}/hr</span>
+                      <span>{m.allocatedHours}h allocated</span>
+                      <span>{m.tasksCompleted} done</span>
+                    </div>
+                  </div>
+                )
+              })}
+              {costData.memberCosts.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4">No team members</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Savings Opportunities */}
+        <Card className="lg:col-span-1 border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <TrendingDown className="h-4 w-4 text-emerald-500" />
+              Savings Opportunities
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {costData.costSavingOpportunities.map((opp, i) => (
+                <div
+                  key={i}
+                  className="p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 space-y-1.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                        {opp.type}
+                      </Badge>
+                      <span className="text-xs font-medium">{opp.title}</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{opp.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                      <ArrowDownRight className="h-3 w-3" />
+                      Save ~${Math.round(opp.potentialSaving).toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {Math.round(opp.confidence * 100)}% confidence
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {costData.costSavingOpportunities.length === 0 && (
+                <div className="text-center py-6 space-y-2">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-500/30 mx-auto" />
+                  <p className="text-xs text-muted-foreground">No savings needed — costs are optimized!</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Cost Analysis */}
+        <Card className="lg:col-span-1 border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              AI Cost Optimizer
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button
+              onClick={onRunAI}
+              disabled={isPending || aiLoading}
+              size="sm"
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+            >
+              {aiLoading ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                  Analyzing costs...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5 mr-2" />
+                  Run AI Cost Analysis
+                </>
+              )}
+            </Button>
+
+            {aiAnalysis && (
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
+                  <p className="text-xs text-foreground/80 leading-relaxed">{aiAnalysis.analysis}</p>
+                </div>
+
+                {aiAnalysis.suggestions.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">AI Suggestions</p>
+                    {aiAnalysis.suggestions.map((s, i) => (
+                      <div key={i} className="p-2.5 rounded-lg border border-amber-500/15 bg-amber-500/5 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Lightbulb className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                          <span className="text-xs font-medium">{s.title}</span>
+                        </div>
+                        <div className="flex gap-3 text-[10px] text-muted-foreground pl-5">
+                          <span>Impact: <span className={s.impact === 'High' ? 'text-emerald-400' : s.impact === 'Medium' ? 'text-amber-400' : 'text-muted-foreground'}>{s.impact}</span></span>
+                          <span>Effort: {s.effort}</span>
+                          <span className="text-emerald-400">{s.saving}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!aiAnalysis && !aiLoading && (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                Run AI analysis to get personalized cost optimization suggestions based on your project data.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ==========================================
+// Sprint Health Diagnostic Panel
+// ==========================================
+
+function SprintHealthPanel({ healthData }: { healthData: SprintHealthData | null }) {
+  if (!healthData) {
+    return (
+      <div className="text-center py-16 space-y-3">
+        <HeartPulse className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+        <p className="text-sm text-muted-foreground">Sprint health data unavailable.</p>
+      </div>
+    )
+  }
+
+  const scoreColor =
+    healthData.overallScore >= 70
+      ? 'text-emerald-500'
+      : healthData.overallScore >= 40
+      ? 'text-amber-500'
+      : 'text-red-500'
+
+  const scoreGradient =
+    healthData.overallScore >= 70
+      ? 'from-emerald-500 to-teal-500'
+      : healthData.overallScore >= 40
+      ? 'from-amber-500 to-orange-500'
+      : 'from-red-500 to-rose-500'
+
+  const statusColors = {
+    healthy: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    critical: 'bg-red-500/10 text-red-400 border-red-500/20',
+  }
+
+  const severityColors = {
+    low: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    high: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    critical: 'bg-red-500/10 text-red-400 border-red-500/20',
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Overall Health Score */}
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-8">
+            {/* Score Circle */}
+            <div className="flex-shrink-0 relative">
+              <div className={`w-28 h-28 rounded-full flex items-center justify-center bg-gradient-to-br ${scoreGradient} p-[3px]`}>
+                <div className="w-full h-full rounded-full bg-background flex flex-col items-center justify-center">
+                  <span className={`text-3xl font-bold ${scoreColor}`}>{healthData.overallScore}</span>
+                  <span className="text-[10px] text-muted-foreground">/ 100</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="text-sm font-semibold">Sprint Health Score</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {healthData.overallScore >= 70
+                    ? 'Sprint is on track with healthy metrics across the board.'
+                    : healthData.overallScore >= 40
+                    ? 'Sprint has some areas of concern that need attention.'
+                    : 'Sprint is in critical condition — immediate action required.'}
+                </p>
+              </div>
+
+              {/* Quick dimension overview */}
+              <div className="flex flex-wrap gap-2">
+                {healthData.dimensions.map((dim) => (
+                  <Badge
+                    key={dim.name}
+                    variant="outline"
+                    className={`text-[10px] px-2 py-0.5 ${statusColors[dim.status]}`}
+                  >
+                    {dim.name}: {dim.score}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Health Dimensions */}
+        <Card className="lg:col-span-2 border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Gauge className="h-4 w-4 text-blue-500" />
+              Health Dimensions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {healthData.dimensions.map((dim) => {
+                const barColor =
+                  dim.status === 'healthy'
+                    ? 'bg-emerald-500'
+                    : dim.status === 'warning'
+                    ? 'bg-amber-500'
+                    : 'bg-red-500'
+                return (
+                  <div key={dim.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium">{dim.name}</span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] px-1.5 py-0 capitalize ${statusColors[dim.status]}`}
+                        >
+                          {dim.status}
+                        </Badge>
+                      </div>
+                      <span className="text-xs font-mono font-bold">{dim.score}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                        style={{ width: `${dim.score}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">{dim.details}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Risk Factors + Recommendations */}
+        <div className="space-y-6">
+          {/* Risk Factors */}
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                Risk Factors
+                {healthData.riskFactors.length > 0 && (
+                  <Badge variant="destructive" className="ml-auto text-[10px]">
+                    {healthData.riskFactors.length}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {healthData.riskFactors.map((risk, i) => (
+                  <div key={i} className="p-2.5 rounded-lg border border-border/30 bg-background/30 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={`text-[9px] px-1.5 py-0 uppercase ${severityColors[risk.severity]}`}
+                      >
+                        {risk.severity}
+                      </Badge>
+                      <span className="text-xs font-medium">{risk.factor}</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">{risk.detail}</p>
+                  </div>
+                ))}
+                {healthData.riskFactors.length === 0 && (
+                  <div className="text-center py-6 space-y-2">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-500/30 mx-auto" />
+                    <p className="text-xs text-muted-foreground">No active risk factors</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recommendations */}
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-amber-500" />
+                Recommendations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {healthData.recommendations.map((rec, i) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-[10px] font-bold text-amber-500">{i + 1}</span>
+                    </div>
+                    <p className="text-xs text-foreground/80 leading-relaxed">{rec}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
@@ -481,7 +1011,7 @@ function StatCard({
         </div>
         <div>
           <p className="text-lg font-bold tracking-tight">{value}</p>
-          <p className="text-[10px] text-muted-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>
     </Card>

@@ -38,9 +38,9 @@ const STATUS_CONFIG: Record<IssueStatus, { icon: React.ElementType; color: strin
 
 const ActivityFeedCard = ({ projectId, projectKey, activities }: Props) => {
   return (
-    <Card className="col-span-full md:col-span-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Activity className="h-4 w-4" />
           Recent Activity
         </CardTitle>
@@ -61,7 +61,7 @@ const ActivityFeedCard = ({ projectId, projectKey, activities }: Props) => {
               return (
                 <Link
                   key={activity.id}
-                  href={`/projects/${projectId}/issues/${activity.id}`}
+                  href={`/projects/${projectId}/project-manager/issues/${activity.id}`}
                   className={cn(
                     "flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors group",
                     index !== activities.length - 1 && "border-b border-dashed"
@@ -83,7 +83,7 @@ const ActivityFeedCard = ({ projectId, projectKey, activities }: Props) => {
                       <span className="text-xs text-muted-foreground font-mono">
                         {projectKey}-{activity.number}
                       </span>
-                      <Badge variant="outline" className={cn("text-[10px] px-1 py-0", statusConfig.color)}>
+                      <Badge variant="outline" className={cn("text-xs px-1.5 py-0", statusConfig.color)}>
                         {statusConfig.label}
                       </Badge>
                     </div>

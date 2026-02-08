@@ -42,7 +42,7 @@ const TeamOverviewCard = ({ projectId, totalCount, members }: Props) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Users className="h-4 w-4" />
           Team Members
         </CardTitle>
@@ -94,7 +94,7 @@ const TeamOverviewCard = ({ projectId, totalCount, members }: Props) => {
         </div>
 
         {/* Link to team page */}
-        <Link href={`/projects/${projectId}/settings/team`}>
+        <Link href={`/projects/${projectId}/project-manager/settings/team`}>
           <Button variant="ghost" size="sm" className="w-full justify-between">
             Manage Team
             <ArrowRight className="h-4 w-4" />

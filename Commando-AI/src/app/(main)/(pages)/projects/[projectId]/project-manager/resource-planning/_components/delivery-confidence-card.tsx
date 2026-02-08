@@ -80,7 +80,7 @@ const DeliveryConfidenceCard = ({
               <span className={cn('text-3xl font-bold tabular-nums', config.text)}>
                 {confidence}
               </span>
-              <span className="text-[10px] text-muted-foreground font-medium -mt-0.5">percent</span>
+              <span className="text-xs text-muted-foreground font-medium -mt-0.5">percent</span>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ function StatItem({ icon, label, value, danger }: { icon: React.ReactNode; label
     )}>
       {icon}
       <div className="min-w-0">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
         <p className={cn('text-sm font-semibold tabular-nums', danger && 'text-red-500')}>{value}</p>
       </div>
     </div>

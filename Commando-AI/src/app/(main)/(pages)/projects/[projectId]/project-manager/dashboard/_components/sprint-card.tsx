@@ -36,7 +36,7 @@ const SprintCard = ({ projectId, sprint }: Props) => {
     return (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Active Sprint
           </CardTitle>
@@ -46,8 +46,8 @@ const SprintCard = ({ projectId, sprint }: Props) => {
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
               <Zap className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="text-sm text-muted-foreground mb-3">No active sprint</p>
-            <Link href={`/projects/${projectId}/backlog`}>
+            <p className="text-base text-muted-foreground mb-3">No active sprint</p>
+            <Link href={`/projects/${projectId}/project-manager/backlog`}>
               <Button variant="outline" size="sm">
                 Start a Sprint
               </Button>
@@ -74,7 +74,7 @@ const SprintCard = ({ projectId, sprint }: Props) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
           Active Sprint
         </CardTitle>
@@ -85,7 +85,7 @@ const SprintCard = ({ projectId, sprint }: Props) => {
       <CardContent className="space-y-4">
         {/* Sprint name and goal */}
         <div>
-          <h3 className="font-semibold">{sprint.name}</h3>
+          <h3 className="text-base font-semibold">{sprint.name}</h3>
           {sprint.goal && (
             <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
               <Target className="h-3 w-3 inline mr-1" />
@@ -151,7 +151,7 @@ const SprintCard = ({ projectId, sprint }: Props) => {
         </div>
 
         {/* Link */}
-        <Link href={`/projects/${projectId}/backlog`}>
+        <Link href={`/projects/${projectId}/project-manager/backlog`}>
           <Button variant="ghost" size="sm" className="w-full justify-between">
             View Sprint
             <ArrowRight className="h-4 w-4" />

@@ -578,7 +578,7 @@ const TeamManagementClient = ({
       {/* Permissions Reference Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Role Permissions</CardTitle>
+          <CardTitle className="text-base font-semibold">Role Permissions</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
@@ -612,7 +612,7 @@ const TeamManagementClient = ({
       {/* Department Roles Reference Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Department Roles</CardTitle>
+          <CardTitle className="text-base font-semibold">Department Roles</CardTitle>
           <CardDescription>
             Department roles determine which dashboard view a member sees when they access the project.
           </CardDescription>

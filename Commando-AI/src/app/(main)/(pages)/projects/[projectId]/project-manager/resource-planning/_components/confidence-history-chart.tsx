@@ -177,7 +177,7 @@ const ConfidenceHistoryChart = ({ history }: Props) => {
         </div>
 
         {/* Summary bar */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t text-[10px] text-muted-foreground">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
           <span>First: {data[0]?.confidence}%</span>
           <span>High: {Math.max(...data.map(d => d.confidence))}%</span>
           <span>Low: {Math.min(...data.map(d => d.confidence))}%</span>

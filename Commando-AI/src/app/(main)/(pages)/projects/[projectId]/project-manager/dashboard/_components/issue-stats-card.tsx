@@ -52,13 +52,13 @@ const IssueStatsCard = ({ projectId, stats }: Props) => {
     : 0
 
   return (
-    <Card className="col-span-full md:col-span-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <BarChart3 className="h-4 w-4" />
           Issue Statistics
         </CardTitle>
-        <Link href={`/projects/${projectId}/issues`}>
+        <Link href={`/projects/${projectId}/project-manager/issues`}>
           <Button variant="ghost" size="sm" className="gap-1">
             View All
             <ArrowRight className="h-3 w-3" />
@@ -68,13 +68,13 @@ const IssueStatsCard = ({ projectId, stats }: Props) => {
       <CardContent className="space-y-4">
         {/* Total and Completion */}
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-3xl font-bold">{stats.total}</p>
+          <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Total Issues</p>
+            <p className="text-2xl font-bold">{stats.total}</p>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-green-500">{completionRate}%</p>
+          <div className="text-right space-y-1">
             <p className="text-sm text-muted-foreground">Completed</p>
+            <p className="text-2xl font-bold text-green-500">{completionRate}%</p>
           </div>
         </div>
 
@@ -101,7 +101,7 @@ const IssueStatsCard = ({ projectId, stats }: Props) => {
               const config = STATUS_CONFIG[status]
               return (
                 <div key={status} className="text-center">
-                  <p className={cn("text-lg font-semibold", config.color)}>
+                  <p className={cn("text-lg font-bold", config.color)}>
                     {stats.byStatus[status]}
                   </p>
                   <p className="text-xs text-muted-foreground">{config.label}</p>

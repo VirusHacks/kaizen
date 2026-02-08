@@ -108,7 +108,7 @@ const KanbanIssueCard = ({ issue, projectId, projectKey, isDragging }: Props) =>
       {/* Title */}
       <Link
         href={`/projects/${projectId}/issues/${issue.id}`}
-        className="block text-sm font-medium line-clamp-2 hover:text-primary transition-colors"
+        className="block text-sm font-semibold line-clamp-2 hover:text-primary transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
         {issue.title}

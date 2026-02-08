@@ -61,7 +61,7 @@ const BacklogPreviewCard = ({ projectId, projectKey, totalCount, issues }: Props
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Layers className="h-4 w-4" />
           Backlog
         </CardTitle>
@@ -83,7 +83,7 @@ const BacklogPreviewCard = ({ projectId, projectKey, totalCount, issues }: Props
               return (
                 <Link
                   key={issue.id}
-                  href={`/projects/${projectId}/issues/${issue.id}`}
+                  href={`/projects/${projectId}/project-manager/issues/${issue.id}`}
                   className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors group"
                 >
                   <TypeIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -114,7 +114,7 @@ const BacklogPreviewCard = ({ projectId, projectKey, totalCount, issues }: Props
           </>
         )}
 
-        <Link href={`/projects/${projectId}/backlog`} className="block pt-2">
+        <Link href={`/projects/${projectId}/project-manager/backlog`} className="block pt-2">
           <Button variant="ghost" size="sm" className="w-full justify-between">
             View Backlog
             <ArrowRight className="h-4 w-4" />

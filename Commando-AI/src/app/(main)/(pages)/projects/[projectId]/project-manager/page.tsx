@@ -70,7 +70,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-semibold">
+                <h1 className="text-2xl font-semibold">
                   {project?.name || 'Project Dashboard'}
                 </h1>
                 {project?.key && (
@@ -97,7 +97,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="p-6 pb-0">
+      <div className="p-6 pb-2">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Link
             href={`/projects/${params.projectId}/project-manager/issues`}
@@ -108,7 +108,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <ListTodo className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="font-medium">Issues</p>
+                <p className="text-base font-semibold">Issues</p>
                 <p className="text-sm text-muted-foreground">
                   View & manage tasks
                 </p>
@@ -125,7 +125,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <Plus className="h-5 w-5 text-green-500" />
               </div>
               <div>
-                <p className="font-medium">New Issue</p>
+                <p className="text-base font-semibold">New Issue</p>
                 <p className="text-sm text-muted-foreground">
                   Create a task or bug
                 </p>
@@ -142,7 +142,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <LayoutGrid className="h-5 w-5 text-purple-500" />
               </div>
               <div>
-                <p className="font-medium">Kanban Board</p>
+                <p className="text-base font-semibold">Kanban Board</p>
                 <p className="text-sm text-muted-foreground">
                   Visual task management
                 </p>
@@ -159,7 +159,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <Layers className="h-5 w-5 text-orange-500" />
               </div>
               <div>
-                <p className="font-medium">Backlog</p>
+                <p className="text-base font-semibold">Backlog</p>
                 <p className="text-sm text-muted-foreground">
                   Sprint planning & backlog
                 </p>
@@ -176,7 +176,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <GitBranch className="h-5 w-5 text-cyan-500" />
               </div>
               <div>
-                <p className="font-medium">Workflow</p>
+                <p className="text-base font-semibold">Workflow</p>
                 <p className="text-sm text-muted-foreground">
                   Status transitions
                 </p>
@@ -193,7 +193,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <CalendarDays className="h-5 w-5 text-pink-500" />
               </div>
               <div>
-                <p className="font-medium">Timeline</p>
+                <p className="text-base font-semibold">Timeline</p>
                 <p className="text-sm text-muted-foreground">
                   Gantt-style view
                 </p>
@@ -210,7 +210,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <Users className="h-5 w-5 text-indigo-500" />
               </div>
               <div>
-                <p className="font-medium">Team</p>
+                <p className="text-base font-semibold">Team</p>
                 <p className="text-sm text-muted-foreground">Manage members</p>
               </div>
             </div>
@@ -225,7 +225,7 @@ const ProjectDetailPage = async ({ params }: Props) => {
                 <Gauge className="h-5 w-5 text-purple-500" />
               </div>
               <div>
-                <p className="font-medium">Resource Planning</p>
+                <p className="text-base font-semibold">Resource Planning</p>
                 <p className="text-sm text-muted-foreground">AI-powered allocation</p>
               </div>
             </div>

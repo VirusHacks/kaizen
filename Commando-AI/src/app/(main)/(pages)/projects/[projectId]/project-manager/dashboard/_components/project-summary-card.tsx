@@ -58,7 +58,7 @@ const ProjectSummaryCard = ({ project }: Props) => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           {project.description || 'No description provided'}
         </p>
         

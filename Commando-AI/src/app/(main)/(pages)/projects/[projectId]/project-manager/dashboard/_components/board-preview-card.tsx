@@ -15,10 +15,10 @@ type Props = {
 }
 
 const STATUS_CONFIG: Record<IssueStatus, { label: string; color: string; bgColor: string }> = {
-  TODO: { label: 'To Do', color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-800' },
-  IN_PROGRESS: { label: 'In Progress', color: 'text-blue-600', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  IN_REVIEW: { label: 'Review', color: 'text-yellow-600', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30' },
-  DONE: { label: 'Done', color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/30' },
+  TODO: { label: 'To Do', color: 'text-gray-400', bgColor: 'bg-muted' },
+  IN_PROGRESS: { label: 'In Progress', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+  IN_REVIEW: { label: 'Review', color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
+  DONE: { label: 'Done', color: 'text-green-500', bgColor: 'bg-green-500/10' },
 }
 
 const BoardPreviewCard = ({ projectId, snapshot }: Props) => {
@@ -27,7 +27,7 @@ const BoardPreviewCard = ({ projectId, snapshot }: Props) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <LayoutGrid className="h-4 w-4" />
           Board Overview
         </CardTitle>
@@ -48,10 +48,10 @@ const BoardPreviewCard = ({ projectId, snapshot }: Props) => {
                   config.bgColor
                 )}
               >
-                <p className={cn("text-2xl font-bold", config.color)}>
+                <p className={cn("text-xl font-bold", config.color)}>
                   {count}
                 </p>
-                <p className="text-[10px] text-muted-foreground font-medium truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {config.label}
                 </p>
               </div>
@@ -85,7 +85,7 @@ const BoardPreviewCard = ({ projectId, snapshot }: Props) => {
           </div>
         )}
 
-        <Link href={`/projects/${projectId}/board`}>
+        <Link href={`/projects/${projectId}/project-manager/board`}>
           <Button variant="ghost" size="sm" className="w-full justify-between">
             Open Board
             <ArrowRight className="h-4 w-4" />

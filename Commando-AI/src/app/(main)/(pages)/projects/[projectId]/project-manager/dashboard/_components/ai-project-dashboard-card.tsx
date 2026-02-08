@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Sparkles, Loader2, FileText, TrendingUp, AlertTriangle, Lightbulb } from 'lucide-react'
+import { Sparkles, FileText, TrendingUp, AlertTriangle, Lightbulb } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AIProjectSummaryModal,
@@ -85,15 +85,15 @@ export function AIProjectDashboardCard({
 
   return (
     <>
-      <Card className="col-span-1">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
             AI Insights
           </CardTitle>
-          <CardDescription>
+          <p className="text-sm text-muted-foreground">
             AI-powered analysis and task generation
-          </CardDescription>
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Quick Summary Preview */}

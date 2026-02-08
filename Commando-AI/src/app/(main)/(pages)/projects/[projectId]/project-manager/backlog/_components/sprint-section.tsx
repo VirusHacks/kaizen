@@ -165,7 +165,7 @@ const SprintSection = ({
             <div className={cn('w-2 h-2 rounded-full', statusColors[variant])} />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-medium">{sprint.name}</h3>
+                <h3 className="text-base font-semibold">{sprint.name}</h3>
                 <Badge
                   variant={variant === 'active' ? 'default' : 'secondary'}
                   className="text-xs"

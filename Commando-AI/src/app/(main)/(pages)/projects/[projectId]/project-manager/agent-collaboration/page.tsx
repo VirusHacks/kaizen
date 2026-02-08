@@ -3,7 +3,7 @@ import { Loader2, Bot, ArrowLeft } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { getAgentDashboardData, initializeAgents } from './_actions/agent-actions'
+import { getAgentDashboardData, initializeAgents, getCostAndHealthData } from './_actions/agent-actions'
 import AgentDashboardClient from './_components/agent-dashboard-client'
 
 type Props = {
@@ -14,11 +14,21 @@ const AgentDashboardContent = async ({ projectId }: { projectId: string }) => {
   // Ensure agents exist
   await initializeAgents(projectId)
 
-  const data = await getAgentDashboardData(projectId)
+  const [data, costHealthData] = await Promise.all([
+    getAgentDashboardData(projectId),
+    getCostAndHealthData(projectId).catch(() => null),
+  ])
   if (!data) {
     notFound()
   }
-  return <AgentDashboardClient data={data} projectId={projectId} />
+  return (
+    <AgentDashboardClient
+      data={data}
+      projectId={projectId}
+      costData={costHealthData?.cost ?? null}
+      healthData={costHealthData?.health ?? null}
+    />
+  )
 }
 
 const AgentCollaborationPage = async ({ params }: Props) => {

@@ -76,7 +76,7 @@ const KanbanColumn = ({
       {/* Column Header */}
       <div className="p-3 border-b flex items-center gap-2">
         <div className={cn('w-3 h-3 rounded-full', color)} />
-        <h3 className="font-medium text-sm">{title}</h3>
+        <h3 className="text-sm font-semibold">{title}</h3>
         <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
           {issues.length}
         </span>

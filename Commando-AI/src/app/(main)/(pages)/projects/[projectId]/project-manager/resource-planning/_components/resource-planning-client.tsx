@@ -52,7 +52,7 @@ const ResourcePlanningClient = ({ data }: Props) => {
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Project</span>
               <span className="text-sm font-semibold">{data.project.name}</span>
-              <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0">
+              <Badge variant="outline" className="text-xs font-mono px-1.5 py-0">
                 {data.project.key}
               </Badge>
             </div>

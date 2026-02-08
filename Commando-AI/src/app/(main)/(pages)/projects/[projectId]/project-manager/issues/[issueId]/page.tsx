@@ -111,7 +111,7 @@ const IssueDetailPage = async ({ params }: Props) => {
                   </span>
                   <Badge variant="secondary">{issueTypeLabels[issue.type]}</Badge>
                 </div>
-                <h1 className="text-xl font-bold">{issue.title}</h1>
+                <h1 className="text-xl font-semibold">{issue.title}</h1>
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@ const IssueDetailPage = async ({ params }: Props) => {
             <h2 className="text-lg font-semibold mb-4">Description</h2>
             {issue.description ? (
               <div className="prose dark:prose-invert max-w-none">
-                <p className="whitespace-pre-wrap">{issue.description}</p>
+                <p className="whitespace-pre-wrap text-base">{issue.description}</p>
               </div>
             ) : (
               <p className="text-muted-foreground italic">
@@ -188,8 +188,8 @@ const IssueDetailPage = async ({ params }: Props) => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Status */}
-          <div className="rounded-lg border p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+          <div className="rounded-lg border p-6">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">
               Status
             </h3>
             <IssueStatusChanger
@@ -199,9 +199,9 @@ const IssueDetailPage = async ({ params }: Props) => {
           </div>
 
           {/* Details */}
-          <div className="rounded-lg border p-4 space-y-4">
+          <div className="rounded-lg border p-6 space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">
                 Priority
               </h3>
               <div className="flex items-center gap-2">
@@ -212,7 +212,7 @@ const IssueDetailPage = async ({ params }: Props) => {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">
+                <h3 className="text-sm font-semibold text-muted-foreground">
                   Assignee
                 </h3>
                 <AIAssigneeSuggestionButton
@@ -240,7 +240,7 @@ const IssueDetailPage = async ({ params }: Props) => {
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">
                 Reporter
               </h3>
               <div className="flex items-center gap-2">
@@ -258,7 +258,7 @@ const IssueDetailPage = async ({ params }: Props) => {
 
             {issue.dueDate && (
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2">
                   Due Date
                 </h3>
                 <div className="flex items-center gap-2">
@@ -276,7 +276,7 @@ const IssueDetailPage = async ({ params }: Props) => {
           </div>
 
           {/* Dates */}
-          <div className="rounded-lg border p-4 space-y-2 text-sm">
+          <div className="rounded-lg border p-6 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Created</span>
               <span>

@@ -61,7 +61,7 @@ const BacklogSection = ({ issues, projectId, projectKey, isUpdating }: Props) =>
             <Layers className="h-4 w-4 text-gray-500" />
           </div>
           <div>
-            <h3 className="font-medium">Backlog</h3>
+            <h3 className="text-base font-semibold">Backlog</h3>
             <p className="text-xs text-muted-foreground">
               {issues.length} issue{issues.length !== 1 ? 's' : ''}
             </p>

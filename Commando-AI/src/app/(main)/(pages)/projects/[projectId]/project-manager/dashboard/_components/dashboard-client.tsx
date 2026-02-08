@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { DashboardData } from '../_actions/dashboard-actions'
-import ProjectSummaryCard from './project-summary-card'
 import TeamOverviewCard from './team-overview-card'
 import IssueStatsCard from './issue-stats-card'
 import SprintCard from './sprint-card'
@@ -20,9 +19,20 @@ type Props = {
 const DashboardClient = ({ data }: Props) => {
   return (
     <div className="p-6 space-y-6">
-      {/* Row 1: Project Summary + Team Overview + AI Insights */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <ProjectSummaryCard project={data.project} />
+      {/* Row 1: Sprint Progress + Issue Stats (most actionable info first) */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <SprintCard
+          projectId={data.project.id}
+          sprint={data.sprintProgress}
+        />
+        <IssueStatsCard
+          projectId={data.project.id}
+          stats={data.issueStats}
+        />
+      </div>
+
+      {/* Row 2: Team Overview + AI Actions */}
+      <div className="grid gap-6 md:grid-cols-2">
         <TeamOverviewCard
           projectId={data.project.id}
           totalCount={data.team.totalCount}
@@ -38,20 +48,8 @@ const DashboardClient = ({ data }: Props) => {
       {/* AI Features Section */}
       <AIFeaturesCard projectId={data.project.id} />
 
-      {/* Row 2: Issue Stats + Active Sprint */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <IssueStatsCard
-          projectId={data.project.id}
-          stats={data.issueStats}
-        />
-        <SprintCard
-          projectId={data.project.id}
-          sprint={data.sprintProgress}
-        />
-      </div>
-
       {/* Row 3: Board + Backlog + Timeline */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         <BoardPreviewCard
           projectId={data.project.id}
           snapshot={data.boardSnapshot}
@@ -69,14 +67,12 @@ const DashboardClient = ({ data }: Props) => {
         />
       </div>
 
-      {/* Row 4: Recent Activity */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <ActivityFeedCard
-          projectId={data.project.id}
-          projectKey={data.project.key}
-          activities={data.recentActivity}
-        />
-      </div>
+      {/* Row 4: Recent Activity (full width) */}
+      <ActivityFeedCard
+        projectId={data.project.id}
+        projectKey={data.project.key}
+        activities={data.recentActivity}
+      />
     </div>
   )
 }
