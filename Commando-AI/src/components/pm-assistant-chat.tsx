@@ -17,6 +17,7 @@ import {
   Mic,
   MicOff,
   Volume2,
+  AlertCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,12 +27,17 @@ type Message = {
   content: string;
   toolsUsed?: boolean;
   timestamp: Date;
+  isError?: boolean;
 };
 
 type Props = {
   projectId: string;
   projectName: string;
 };
+
+// Rate limiting constants
+const MIN_REQUEST_INTERVAL = 1500; // Minimum 1.5 seconds between requests
+const MAX_MESSAGES_IN_SESSION = 50; // Max messages before suggesting refresh
 
 const SUGGESTED_PROMPTS = [
   'Set up the Kanban board with tasks based on the project vision',
@@ -51,6 +57,8 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [lastRequestTime, setLastRequestTime] = useState(0);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -71,11 +79,40 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
     }
   }, [isOpen]);
 
+  // Clear rate limit error after 5 seconds
+  useEffect(() => {
+    if (rateLimitError) {
+      const timer = setTimeout(() => setRateLimitError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [rateLimitError]);
+
   const sendMessage = useCallback(
     async (content: string, fromVoice = false) => {
       if (!content.trim() || isLoading) return;
 
+      // Client-side rate limiting
+      const now = Date.now();
+      if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
+        setRateLimitError('Please wait a moment before sending another message.');
+        return;
+      }
+
+      // Check message count limit
+      if (messages.length >= MAX_MESSAGES_IN_SESSION) {
+        setRateLimitError('Session limit reached. Please clear the chat to continue.');
+        return;
+      }
+
+      // Input length validation
+      if (content.length > 2000) {
+        setRateLimitError('Message is too long. Please keep it under 2000 characters.');
+        return;
+      }
+
       console.log('📨 sendMessage called with fromVoice:', fromVoice);
+      setLastRequestTime(now);
+      setRateLimitError(null);
 
       const userMessage: Message = {
         id: crypto.randomUUID(),
@@ -104,13 +141,23 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
         });
 
         if (!res.ok) {
-          const errorText = await res.text();
+          const errorData = await res.json().catch(() => ({ error: res.statusText }));
           console.error('❌ API Error Response:', {
             status: res.status,
             statusText: res.statusText,
-            body: errorText,
+            body: errorData,
           });
-          throw new Error(`API Error: ${res.status} - ${errorText}`);
+
+          // Handle specific error cases
+          if (res.status === 429) {
+            throw new Error('Rate limit exceeded. Please wait a moment before trying again.');
+          } else if (res.status === 400) {
+            throw new Error(errorData.error || 'Invalid request. Please rephrase your message.');
+          } else if (res.status === 401) {
+            throw new Error('Session expired. Please refresh the page.');
+          } else {
+            throw new Error(errorData.error || 'Something went wrong. Please try again.');
+          }
         }
 
         const data = await res.json();
@@ -132,24 +179,26 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
         }
       } catch (error) {
         console.error('❌ AI Agent Error:', error);
+        const errorContent = error instanceof Error ? error.message : 'Sorry, something went wrong. Please try again.';
         const errorMessage: Message = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'Sorry, something went wrong. Please try again.',
+          content: errorContent,
           timestamp: new Date(),
+          isError: true,
         };
         setMessages((prev) => [...prev, errorMessage]);
 
         // Speak error message if from voice
         if (fromVoice) {
           console.log('🎙️ Speaking error message...');
-          await speakText('Sorry, something went wrong. Please try again.');
+          await speakText(errorContent);
         }
       } finally {
         setIsLoading(false);
       }
     },
-    [isLoading, messages, projectId],
+    [isLoading, messages, projectId, lastRequestTime],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -161,6 +210,8 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
 
   const clearChat = () => {
     setMessages([]);
+    setRateLimitError(null);
+    setLastRequestTime(0);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -406,8 +457,15 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
                       )}
                     >
                       {msg.role === 'assistant' && (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/20">
-                          <Bot className="h-3.5 w-3.5 text-primary" />
+                        <div className={cn(
+                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                          msg.isError ? "bg-red-500/20" : "bg-primary/20"
+                        )}>
+                          {msg.isError ? (
+                            <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                          ) : (
+                            <Bot className="h-3.5 w-3.5 text-primary" />
+                          )}
                         </div>
                       )}
                       <div
@@ -415,19 +473,24 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
                           'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm',
                           msg.role === 'user'
                             ? 'bg-primary text-primary-foreground rounded-br-md'
-                            : 'bg-muted rounded-bl-md',
+                            : msg.isError 
+                              ? 'bg-red-500/10 border border-red-500/20 rounded-bl-md'
+                              : 'bg-muted rounded-bl-md',
                         )}
                       >
                         {msg.role === 'assistant' ? (
                           <div className="space-y-2">
-                            {msg.toolsUsed && (
+                            {msg.toolsUsed && !msg.isError && (
                               <div className="flex items-center gap-1 text-xs text-primary/70 mb-1">
                                 <Wrench className="h-3 w-3" />
                                 <span>Used project tools</span>
                               </div>
                             )}
                             <div
-                              className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:bg-background/50 prose-pre:border max-w-none"
+                              className={cn(
+                                "prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:bg-background/50 prose-pre:border max-w-none",
+                                msg.isError && "text-red-600 dark:text-red-400"
+                              )}
                               dangerouslySetInnerHTML={{
                                 __html: formatMarkdown(msg.content),
                               }}
@@ -458,6 +521,14 @@ export default function PMAssistantChat({ projectId, projectName }: Props) {
 
             {/* Input */}
             <div className="border-t p-3 bg-background">
+              {rateLimitError && (
+                <div className="mb-2 flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm text-amber-600 dark:text-amber-400">
+                    {rateLimitError}
+                  </span>
+                </div>
+              )}
               {isRecording && (
                 <div className="mb-2 flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg">
                   <div className="flex items-center gap-2">

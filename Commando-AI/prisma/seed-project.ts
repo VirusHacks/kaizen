@@ -7,10 +7,8 @@ async function main() {
 
   // ─── Step 1: Find or create users ───
   const pmEmail = 'virustechhacks@gmail.com'
-  const dev1Email = 'dakshjain3250@gmail.com'
 
   const pmUser = await prisma.user.findUnique({ where: { email: pmEmail } })
-  const dev1User = await prisma.user.findUnique({ where: { email: dev1Email } })
 
   if (!pmUser) {
     console.log(`❌ PM user (${pmEmail}) not found in database.`)
@@ -19,15 +17,17 @@ async function main() {
   }
   console.log(`✅ PM User: ${pmUser.name || pmUser.email} (${pmUser.clerkId})`)
 
-  if (!dev1User) {
-    console.log(`❌ Developer 1 (${dev1Email}) not found in database.`)
-    console.log('   Please sign up with this account first, then re-run.')
-    return
-  }
-  console.log(`✅ Dev1 User: ${dev1User.name || dev1User.email} (${dev1User.clerkId})`)
+  // Find any other existing users to use as developers
+  const allUsers = await prisma.user.findMany({
+    where: { clerkId: { not: pmUser.clerkId } },
+    take: 2
+  })
 
-  // Use dev1 as second developer too for task distribution
-  const dev2User = dev1User
+  const dev1User = allUsers[0] || pmUser // Fallback to PM if no other users
+  const dev2User = allUsers[1] || pmUser // Fallback to PM if not enough users
+  
+  console.log(`✅ Dev1 User: ${dev1User.name || dev1User.email} (${dev1User.clerkId})`)
+  console.log(`✅ Dev2 User: ${dev2User.name || dev2User.email} (${dev2User.clerkId})`)
 
   // ─── Step 2: Create the Project ───
   console.log('\n📦 Creating project...')

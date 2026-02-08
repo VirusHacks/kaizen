@@ -12,6 +12,71 @@ const getCurrentUserId = async () => {
 }
 
 /**
+ * Get all issues in a project (for developer board view).
+ * Returns all non-archived issues so the dev can see overall project progress.
+ */
+export const getAllProjectIssuesForDev = async (projectId: string) => {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { error: 'User not authenticated', data: null }
+  }
+
+  try {
+    const issues = await db.issue.findMany({
+      where: {
+        projectId,
+        isArchived: false,
+      },
+      include: {
+        assignee: {
+          select: {
+            clerkId: true,
+            name: true,
+            email: true,
+            profileImage: true,
+          },
+        },
+        reporter: {
+          select: {
+            clerkId: true,
+            name: true,
+            email: true,
+            profileImage: true,
+          },
+        },
+        parent: {
+          select: {
+            id: true,
+            title: true,
+            number: true,
+            type: true,
+          },
+        },
+        sprint: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+          },
+        },
+        _count: {
+          select: { children: true },
+        },
+      },
+      orderBy: [
+        { priority: 'desc' },
+        { updatedAt: 'desc' },
+      ],
+    })
+
+    return { data: issues, error: null }
+  } catch (error) {
+    console.error('[GET_ALL_PROJECT_ISSUES_FOR_DEV]', error)
+    return { error: 'Failed to fetch project issues', data: null }
+  }
+}
+
+/**
  * Get all issues assigned to the current user in a project
  */
 export const getMyAssignedIssues = async (projectId: string) => {
@@ -220,5 +285,50 @@ export const getDevStats = async (projectId: string) => {
   } catch (error) {
     console.error('[GET_DEV_STATS]', error)
     return { error: 'Failed to fetch stats', data: null }
+  }
+}
+
+/**
+ * Get issues that were recently updated (last N minutes) — used to detect
+ * AI-powered auto-status-updates triggered by GitHub commits.
+ * Returns issues whose status changed recently so the developer dashboard
+ * can display a notification banner.
+ */
+export const getRecentlyUpdatedIssues = async (
+  projectId: string,
+  sinceMinutes: number = 5
+) => {
+  const userId = await getCurrentUserId()
+  if (!userId) {
+    return { error: 'User not authenticated', data: null }
+  }
+
+  try {
+    const since = new Date(Date.now() - sinceMinutes * 60 * 1000)
+
+    const issues = await db.issue.findMany({
+      where: {
+        projectId,
+        isArchived: false,
+        updatedAt: { gte: since },
+      },
+      select: {
+        id: true,
+        number: true,
+        title: true,
+        status: true,
+        updatedAt: true,
+        assignee: {
+          select: { name: true, profileImage: true },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
+    })
+
+    return { data: issues, error: null }
+  } catch (error) {
+    console.error('[GET_RECENTLY_UPDATED_ISSUES]', error)
+    return { error: 'Failed to fetch recently updated issues', data: null }
   }
 }

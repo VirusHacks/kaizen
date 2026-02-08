@@ -10,6 +10,7 @@ import {
   GitBranch,
   Users,
   CalendarDays,
+  Gauge,
 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -211,6 +212,21 @@ const ProjectDetailPage = async ({ params }: Props) => {
               <div>
                 <p className="font-medium">Team</p>
                 <p className="text-sm text-muted-foreground">Manage members</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href={`/projects/${params.projectId}/project-manager/resource-planning`}
+            className="rounded-lg border p-4 hover:border-primary/50 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                <Gauge className="h-5 w-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="font-medium">Resource Planning</p>
+                <p className="text-sm text-muted-foreground">AI-powered allocation</p>
               </div>
             </div>
           </Link>

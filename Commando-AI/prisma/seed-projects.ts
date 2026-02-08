@@ -11,20 +11,52 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🚀 Seeding 3 realistic projects...\n')
 
-  // ── Owner: Vinay ──────────────────────────────────────────────────────
-  const OWNER_ID = 'user_37hcpUmzBHFx9CMkKMxbjeOkVuH'
-
-  // Existing team member clerk IDs (created by earlier seed)
-  const TEAM = {
-    aarav:   'user_aarav_001',
-    priya:   'user_priya_002',
-    rahul:   'user_rahul_003',
-    sneha:   'user_sneha_004',
-    vikram:  'user_vikram_005',
-    ananya:  'user_ananya_006',
-    kristina:'user_39LSY16tVr6pf9Qn1Ty7pFs3GCw',
-    virus:   'user_37WoBjtLBxW0BCi7H3cBtJja6RV',
+  // ── Find Owner ──────────────────────────────────────────────────────
+  const ownerEmail = 'virustechhacks@gmail.com'
+  const owner = await prisma.user.findUnique({ where: { email: ownerEmail } })
+  
+  if (!owner) {
+    console.log(`❌ Owner user (${ownerEmail}) not found in database.`)
+    console.log('   Please sign up with this account first, then re-run.')
+    return
   }
+  
+  const OWNER_ID = owner.clerkId
+  console.log(`✅ Owner: ${owner.name || owner.email} (${OWNER_ID})\n`)
+
+  // Find or create team members (use existing users or create seed users)
+  const teamEmails = [
+    'aarav@kaizen.dev',
+    'priya@kaizen.dev',
+    'rahul@kaizen.dev',
+    'sneha@kaizen.dev',
+    'vikram@kaizen.dev',
+    'ananya@kaizen.dev',
+    'kristina@kaizen.dev',
+  ]
+  
+  const TEAM: Record<string, string> = {}
+  
+  // Add owner to TEAM as 'virus'
+  TEAM.virus = OWNER_ID
+  
+  for (const email of teamEmails) {
+    let user = await prisma.user.findUnique({ where: { email } })
+    if (!user) {
+      // Create seed user if doesn't exist
+      const name = email.split('@')[0]
+      user = await prisma.user.create({
+        data: {
+          email,
+          clerkId: `user_seed_${name}_${Date.now()}`,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+        }
+      })
+    }
+    TEAM[email.split('@')[0]] = user.clerkId
+  }
+  
+  console.log(`✅ Team: ${Object.keys(TEAM).length} members\n`)
 
   // helper: date offset from now
   const d = (offset: number) => {

@@ -5,18 +5,20 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Code, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { getMyAssignedIssues, getDevStats } from './_actions/developer-actions'
+import { getMyAssignedIssues, getAllProjectIssuesForDev, getDevStats } from './_actions/developer-actions'
 import { getProjectWorkflow } from '@/app/(main)/(pages)/projects/[projectId]/project-manager/settings/workflow/_actions/workflow-actions'
 import DeveloperDashboardClient from './_components/developer-dashboard-client'
+import DevAssistantChat from '@/components/dev-assistant-chat'
 
 type Props = {
   params: { projectId: string }
 }
 
 const DeveloperPage = async ({ params }: Props) => {
-  const [projectResult, issuesResult, statsResult, workflowResult] = await Promise.all([
+  const [projectResult, issuesResult, allIssuesResult, statsResult, workflowResult] = await Promise.all([
     getProjectById(params.projectId),
     getMyAssignedIssues(params.projectId),
+    getAllProjectIssuesForDev(params.projectId),
     getDevStats(params.projectId),
     getProjectWorkflow(params.projectId),
   ])
@@ -78,9 +80,13 @@ const DeveloperPage = async ({ params }: Props) => {
         projectKey={project.key}
         projectName={project.name}
         initialIssues={issuesResult.data || []}
+        allProjectIssues={allIssuesResult.data || []}
         stats={statsResult.data || null}
         allowedTransitions={transitionMap}
       />
+
+      {/* Floating AI Dev Assistant */}
+      <DevAssistantChat projectId={params.projectId} projectName={project.name} />
     </div>
   )
 }

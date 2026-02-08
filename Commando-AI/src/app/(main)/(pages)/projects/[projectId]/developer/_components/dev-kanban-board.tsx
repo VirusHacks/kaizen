@@ -33,6 +33,9 @@ import {
   AlertTriangle,
   Ban,
   GripVertical,
+  Github,
+  CircleDot,
+  ExternalLink,
 } from 'lucide-react'
 import type { DevIssue } from './developer-dashboard-client'
 
@@ -49,6 +52,7 @@ const issueTypeIcons: Record<string, React.ReactNode> = {
   TASK: <CheckSquare className="h-3.5 w-3.5 text-blue-500" />,
   BUG: <Bug className="h-3.5 w-3.5 text-red-500" />,
   SUBTASK: <Layers className="h-3.5 w-3.5 text-gray-500" />,
+  GITHUB_ISSUE: <CircleDot className="h-3.5 w-3.5 text-green-500" />,
 }
 
 const priorityIcons: Record<string, React.ReactNode> = {
@@ -75,6 +79,8 @@ function DevIssueCard({
   isSelected: boolean
   isDragging?: boolean
 }) {
+  const isGitHub = issue.source === 'github'
+
   const {
     attributes,
     listeners,
@@ -82,7 +88,7 @@ function DevIssueCard({
     transform,
     transition,
     isDragging: isSortableDragging,
-  } = useSortable({ id: issue.id })
+  } = useSortable({ id: issue.id, disabled: isGitHub })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -98,22 +104,34 @@ function DevIssueCard({
         'hover:border-primary/50 hover:shadow-md',
         isSelected && 'border-primary ring-2 ring-primary/20',
         (isDragging || isSortableDragging) && 'opacity-50 shadow-lg rotate-1 scale-105',
+        isGitHub && 'border-l-2 border-l-green-500/60',
       )}
       onClick={(e) => {
         e.stopPropagation()
-        onSelect(issue.id)
+        if (isGitHub && issue.githubUrl) {
+          window.open(issue.githubUrl, '_blank')
+        } else {
+          onSelect(issue.id)
+        }
       }}
     >
       {/* Drag handle + Key */}
       <div className="flex items-center gap-2 mb-2">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
-        </div>
+        {!isGitHub ? (
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+          </div>
+        ) : (
+          <Github className="h-3.5 w-3.5 text-muted-foreground/50" />
+        )}
         <span className="font-mono text-xs text-muted-foreground">
-          {projectKey}-{issue.number}
+          {isGitHub ? `#${issue.number}` : `${projectKey}-${issue.number}`}
         </span>
         {issueTypeIcons[issue.type]}
         {priorityIcons[issue.priority]}
+        {isGitHub && (
+          <ExternalLink className="h-3 w-3 text-muted-foreground/50 ml-auto" />
+        )}
       </div>
 
       {/* Title */}
@@ -126,6 +144,23 @@ function DevIssueCard({
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
               {issue.sprint.name}
             </span>
+          )}
+          {isGitHub && issue.githubLabels && issue.githubLabels.length > 0 && (
+            <div className="flex items-center gap-1">
+              {issue.githubLabels.slice(0, 2).map((l) => (
+                <span
+                  key={l.id}
+                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  style={{
+                    backgroundColor: `#${l.color}20`,
+                    color: `#${l.color}`,
+                    border: `1px solid #${l.color}40`,
+                  }}
+                >
+                  {l.name}
+                </span>
+              ))}
+            </div>
           )}
           {issue._count.children > 0 && (
             <span className="text-[10px] flex items-center gap-0.5 text-muted-foreground">
@@ -306,6 +341,12 @@ export default function DevKanbanBoard({
     const issue = localIssues.find((i) => i.id === activeId)
     if (!issue || issue.status === targetStatus) return
 
+    if (issue.source === 'github') {
+      toast.error('GitHub issue status can only be changed on GitHub')
+      setLocalIssues((p) => [...p]) // reset
+      return
+    }
+
     if (!isTransitionAllowed(issue.status, targetStatus)) {
       toast.error('Workflow does not allow this transition')
       return
@@ -363,8 +404,13 @@ export default function DevKanbanBoard({
           {activeIssue && (
             <div className="bg-background rounded-lg border p-3 shadow-xl rotate-2 scale-105 w-[260px]">
               <div className="flex items-center gap-2 mb-2">
+                {activeIssue.source === 'github' && (
+                  <Github className="h-3.5 w-3.5 text-muted-foreground/50" />
+                )}
                 <span className="font-mono text-xs text-muted-foreground">
-                  {projectKey}-{activeIssue.number}
+                  {activeIssue.source === 'github'
+                    ? `#${activeIssue.number}`
+                    : `${projectKey}-${activeIssue.number}`}
                 </span>
                 {issueTypeIcons[activeIssue.type]}
                 {priorityIcons[activeIssue.priority]}

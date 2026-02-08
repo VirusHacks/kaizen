@@ -279,8 +279,14 @@ export async function getRepositoryCommits(
       page: options?.page ?? 1,
     })
     return { data, error: null }
-  } catch (error) {
+  } catch (error: any) {
     console.error('[GET_GITHUB_COMMITS]', error)
+    
+    // Handle empty repository (409 status)
+    if (error?.status === 409 && error?.message?.includes('empty')) {
+      return { data: [], error: null }
+    }
+    
     return { data: null, error: 'Failed to fetch commits' }
   }
 }
