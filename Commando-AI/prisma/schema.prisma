@@ -176,6 +176,13 @@ model Project {
   agentProfiles  AgentProfile[]
   agentMessages  AgentMessage[]
   agentDecisions AgentDecision[]
+
+  // Predictive Delivery Engine
+  deliveryPredictions  DeliveryPrediction[]
+  deliveryCommitments  DeliveryCommitment[]
+  deliveryScenarios    DeliveryScenario[]
+  dependencyChains     DependencyChain[]
+  velocitySnapshots    VelocitySnapshot[]
 }
 
 model ProjectSetup {
@@ -289,6 +296,7 @@ model Sprint {
   projectId String
 
   issues Issue[]
+  velocitySnapshots VelocitySnapshot[]
 
   @@index([projectId])
   @@index([status])
@@ -824,4 +832,219 @@ model AgentDecision {
   @@index([decisionType])
   @@index([status])
   @@index([createdAt])
+}
+
+// ==========================================
+// Predictive Delivery Engine Models
+// ==========================================
+
+enum PredictionConfidence {
+  LOW         // < 50%
+  MEDIUM      // 50-70%
+  HIGH        // 70-85%
+  VERY_HIGH   // > 85%
+}
+
+enum CommitmentStatus {
+  PENDING
+  ON_TRACK
+  AT_RISK
+  DELAYED
+  DELIVERED
+  MISSED
+}
+
+// Stores Monte Carlo simulation results for features/milestones
+model DeliveryPrediction {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // What we're predicting
+  targetId     String // Issue ID, Sprint ID, or Milestone ID
+  targetType   String // "ISSUE", "SPRINT", "MILESTONE", "FEATURE_GROUP"
+  targetTitle  String
+
+  // Prediction results (from Monte Carlo simulation)
+  p50Date      DateTime // 50% confidence date (median)
+  p70Date      DateTime // 70% confidence date
+  p85Date      DateTime // 85% confidence date
+  p90Date      DateTime // 90% confidence date
+  
+  confidence   PredictionConfidence
+  
+  // Velocity assumptions
+  historicalVelocity     Float   // Story points per sprint
+  currentTeamCapacity    Float   // Available hours per sprint
+  remainingComplexity    Float   // Estimated story points remaining
+  
+  // Risk factors
+  dependencyCount        Int     @default(0)
+  criticalPathLength     Int     @default(0) // Days on critical path
+  teamBurnoutRisk        Float   @default(0)
+  externalDependencies   Int     @default(0)
+  
+  // Simulation metadata
+  simulationRuns         Int     @default(10000)
+  simulationMethod       String  @default("monte_carlo")
+  assumptions            Json    // Store assumptions as JSON
+  
+  // Scenario analysis
+  bestCase      DateTime // Optimistic scenario
+  worstCase     DateTime // Pessimistic scenario
+  mostLikely    DateTime // Mode of distribution
+  
+  // Predictions refresh daily or on major changes
+  calculatedAt  DateTime @default(now())
+  validUntil    DateTime // Invalidate after project changes
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([targetId])
+  @@index([targetType])
+  @@index([validUntil])
+}
+
+// Tracks commitments made to stakeholders/customers
+model DeliveryCommitment {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // What was committed
+  commitmentType  String // "FEATURE", "SPRINT", "MILESTONE", "RELEASE"
+  targetId        String // Issue ID, Sprint ID, etc.
+  targetTitle     String
+  description     String?
+  
+  // Commitment details
+  committedDate   DateTime // When we promised delivery
+  committedTo     String   // Stakeholder/customer name
+  committedBy     String   // User who made commitment (e.g., sales rep)
+  
+  // Tracking
+  status          CommitmentStatus @default(PENDING)
+  actualDelivery  DateTime?
+  daysEarly       Int?     // Positive if early, negative if late
+  
+  // Confidence tracking
+  initialConfidence   Float  // Confidence when commitment made
+  currentConfidence   Float? // Current confidence (updated daily)
+  
+  // Risk tracking
+  riskLevel           String  @default("LOW") // LOW, MEDIUM, HIGH, CRITICAL
+  riskFactors         Json?   // Array of risk descriptions
+  
+  // Financial impact (if applicable)
+  revenueImpact       Float?  // $ tied to this commitment
+  penaltyClause       Float?  // $ penalty if missed
+  
+  // Alerts
+  earlyWarningIssued  Boolean @default(false)
+  warningIssuedAt     DateTime?
+  daysBeforeMiss      Int?    // How many days before miss was warning issued
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@index([committedDate])
+  @@index([riskLevel])
+}
+
+// Stores what-if scenario results
+model DeliveryScenario {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  
+  // Scenario parameters (what changes)
+  changes     Json // e.g., { "addDevelopers": 2, "reduceScope": 10 }
+  
+  // Impact results
+  originalP70Date    DateTime
+  scenarioP70Date    DateTime
+  daysSaved          Int      // Positive if faster, negative if slower
+  
+  confidenceChange   Float    // Change in delivery confidence %
+  costImpact         Float?   // $ increase/decrease
+  riskImpact         String?  // Description of new risks
+  
+  // Metadata
+  createdBy   String
+  isActive    Boolean  @default(false) // True if scenario is being executed
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([isActive])
+}
+
+// Tracks dependency chains and their impact
+model DependencyChain {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Root issue that blocks others
+  rootIssueId     String
+  rootIssueTitle  String
+  
+  // Chain metadata
+  chainLength     Int    // How many issues in chain
+  totalDaysAtRisk Int    // Sum of task durations in chain
+  
+  // Impact analysis
+  blockedIssues   Json   // Array of {issueId, title, estimatedDelay}
+  criticalPath    Boolean @default(false)
+  
+  // Risk scoring
+  riskScore       Float  // 0-100, higher = more critical
+  impactRadius    Int    // How many features affected
+  
+  lastAnalyzedAt DateTime @default(now())
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([rootIssueId])
+  @@index([criticalPath])
+}
+
+// Historical velocity tracking for ML predictions
+model VelocitySnapshot {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  sprintId  String?
+  sprint    Sprint?  @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  
+  // Velocity metrics
+  weekStart       DateTime
+  weekEnd         DateTime
+  storyPoints     Float    // Points completed
+  tasksCompleted  Int
+  
+  // Team metrics
+  teamSize        Int
+  avgUtilization  Float
+  avgBurnout      Float
+  
+  // Quality metrics
+  bugsCreated     Int @default(0)
+  reworkHours     Float @default(0)
+  
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([weekStart])
 }
