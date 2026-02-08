@@ -1,469 +1,493 @@
 # Commando AI
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748.svg)](https://www.prisma.io/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC.svg)](https://tailwindcss.com/)
-[![Gemini AI](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4.svg)](https://deepmind.google/technologies/gemini/)
+> **Project management that learns, predicts, and works where you code.**
+
+<div align="center">
+
+### 🎬 Watch the Demo
+
+<a href="https://youtu.be/2j6ZlTjrUX4">
+  <img src="https://img.youtube.com/vi/2j6ZlTjrUX4/hqdefault.jpg" alt="Commando AI Demo" width="600"/>
+</a>
+
+▶️ **[Click to watch the full demo on YouTube](https://youtu.be/2j6ZlTjrUX4)**
+
+</div>
 
 ---
 
-## Overview
+## 🎯 What Makes Commando AI Different
 
-**Commando AI** is a full-stack AI-powered project management and workflow automation platform built with Next.js 14. It combines visual workflow automations, real-time video meetings with live transcription, a complete CRM, predictive delivery intelligence, multi-agent collaboration, and an MCP server for IDE integration — all driven by **Gemini 2.5-flash** with human-in-the-loop safeguards.
+### 1. **AI That Actually Learns From YOUR Team** 
+Most AI tools give the same suggestions to everyone. Ours learns what works for YOUR specific team and gets smarter with every decision you make. It uses advanced reinforcement learning (Thompson Sampling) to figure out which recommendations you actually like.
 
-The platform provides **six role-based dashboards** (Developer, Project Manager, Executive, Finance & HR, Sales, QA Tester), each tailored with role-specific tools, analytics, and AI capabilities.
-
----
-
-## ✨ Features at a Glance
-
-| Category | Highlights |
-|----------|------------|
-| **Role-Based Dashboards** | 6 department views with tailored tools and analytics |
-| **AI Engine (Gemini 2.5-flash)** | Task generation, assignee suggestion, sprint planning, timeline, summaries |
-| **Multi-Agent System** | Developer, Manager, Optimizer agents with autonomous coordination |
-| **Predictive Delivery Engine** | Monte Carlo simulations, dependency analysis, what-if scenarios |
-| **Resource Allocation** | Thompson Sampling, burnout modeling, Pareto-optimal scoring |
-| **Visual Workflow Builder** | Drag-and-drop ReactFlow editor with 15+ node types |
-| **Sales CRM** | Revenue analytics, forecasting, RFM segmentation, AI chart generation |
-| **Video Meetings** | Stream.io HD video with live Whisper transcription |
-| **GitHub Integration** | GitHub App with OAuth, webhooks, issues/commits in developer view |
-| **MCP Server** | 26 tools for VS Code / Copilot / Claude / Cursor integration |
-| **Service Integrations** | Google Drive, Gmail, Calendar, Slack, Discord, Notion |
-| **Super User System** | Admin role override for cross-project access with role selection |
+**Simple example:** If your team prefers reassigning tasks over delaying them, the AI notices and adapts in real-time.
 
 ---
 
-## 👥 Role-Based Project Dashboards
+### 2. **Predictions You Can Actually Trust**
+Stop guessing delivery dates. Get **probability-based forecasts** instead of random estimates. Our system runs 10,000 simulations of your project's future to tell you: *"90% chance we'll finish by March 15"* — not just *"March 1 maybe?"*
 
-Each project member is assigned a department role that determines their dashboard experience:
-
-### Project Manager
-Full project control with AI-assisted planning:
-- **Issues CRUD** — Create, assign, track issues with AI assignee suggestions
-- **Kanban Board** — Drag-and-drop board with DnD Kit
-- **Backlog & Sprint Planning** — AI-powered sprint population
-- **Timeline (Gantt)** — Visual timeline with AI date suggestions
-- **Workflow Editor** — Custom status transitions per project
-- **Team Management** — Member roles and permissions
-- **Resource Planning** — Utilization heatmaps, delivery confidence, risk analysis, recommendations
-- **Delivery Engine** — Monte Carlo predictions, what-if scenarios, commitment tracking
-- **Agent Collaboration** — Multi-agent autonomous team dashboard
-- **PM Assistant Chat** — Gemini-powered conversational PM with function calling and voice I/O
-
-### Developer
-Focused task execution with GitHub integration:
-- **My Tasks** — Filtered view of assigned issues with Kanban or list layout
-- **Task Detail Panel** — Inline issue detail with status updates
-- **GitHub Issues** — Live GitHub issues with state filter (open/closed/all), labels, assignees
-- **GitHub Commits** — Commits grouped by date with author info, SHA copy, external links
-
-### Executive
-Strategic oversight dashboards:
-- **Delivery Intelligence** — High-level project health and delivery predictions
-- **Resource Insights** — Team utilization and capacity overview
-
-### Finance & HR
-Cost and team health monitoring:
-- **Cost Efficiency** — Budget tracking and resource cost analysis
-- **Burnout Risk** — Team workload and burnout risk indicators
-
-### Sales (Full CRM)
-Complete sales intelligence suite:
-- **Analysis Dashboard** — 11 chart types: monthly sales, AOV trend, RFM (bar/radar/radial), revenue by day/hour, top countries/products/customers
-- **Prediction Dashboard** — Revenue/AOV/Orders forecasts with confidence radial
-- **Generative Chart Chatbot** — Natural language to charts ("Show me revenue by month")
-- **Revenue, Customers, Orders** — Detailed CRUD pages with Customer360 view
-- **New Leads** — Lead generation page
-- **AI Sales Assistant** — Tavus video AI chatbot for sales coaching
-- **WhatsApp Integration** — Message customers directly
-
-### QA Tester
-- Coming soon — placeholder with "Coming Soon" badge
+**Simple example:** Like a weather forecast for your project — we show you the chances, not false promises.
 
 ---
 
-## 🤖 AI Engine (Gemini 2.5-flash)
+### 3. **Works Right Inside Your Code Editor**
+Forget switching between ten browser tabs. Ask questions about your project **directly in VS Code, Cursor, or any IDE** using our MCP Server. Your AI coding assistant (GitHub Copilot, Claude) now knows your project status.
 
-### Core AI Capabilities
+**Simple example:** Type *"What's blocking my current task?"* in your editor — get instant answers without leaving your code.
 
-| Feature | Description |
-|---------|-------------|
-| **Task Generation** | Generate epics, stories, and tasks from project context |
-| **Assignee Suggestion** | Skill-based recommendations with confidence scores |
-| **Sprint Planner** | Automatic sprint population with capacity analysis |
-| **Timeline Suggestions** | Optimal start/due dates based on dependencies |
-| **Project Summary** | Executive summaries with metrics, risks, and recommendations |
-| **Chart Generation** | Natural language → chart configs for sales analytics |
-| **PM Assistant** | Conversational PM with Gemini function calling (create issues, plan sprints, get stats) |
+---
 
-### AI Architecture
+### 4. **Multiple AI Agents That Debate & Collaborate**
+Instead of one AI assistant, you get a team of specialist agents (Developer, Manager, Optimizer) that discuss plans, challenge each other's ideas, and vote on decisions — just like a real team.
+
+**Simple example:** Developer agent says "this needs 5 days," Manager agent counters "we have 3 days," Optimizer agent finds a middle ground — you get the best solution.
+
+---
+
+## 💡 Core Platform Features
+
+**Commando AI** is a complete AI-powered project management platform with six role-based dashboards, workflow automation, video meetings with live transcription, full CRM, and predictive delivery intelligence.
+
+---
+
+## ⚡ Key Features Overview
+
+| What It Does | Why It Matters |
+|--------------|----------------|
+| **6 Role-Based Dashboards** | Every team member sees exactly what they need — developers see tasks, managers see plans, executives see strategy |
+| **AI Task Generator** | Describe your feature in plain English → Get organized tasks, assignees, and timelines automatically |
+| **Intelligent Delivery Predictions** | Know when you'll actually finish (with confidence levels) using Monte Carlo simulations |
+| **Smart Resource Allocation** | AI learns which team members excel at which tasks and suggests optimal assignments |
+| **Visual Workflow Builder** | Build automations by dragging boxes — no coding needed (Slack, Notion, Google Drive, Discord) |
+| **Live Meeting Transcription** | HD video calls with real-time AI transcription — never miss important details |
+| **Full Sales CRM** | Track customers, forecast revenue, analyze trends with AI-generated charts |
+| **MCP Server for IDEs** | Ask your coding assistant about projects, tasks, sprints — without leaving your editor |
+| **Multi-Agent Collaboration** | AI agents that debate, vote, and coordinate like a real team |
+
+---
+
+## 👥 Who Commando AI is Built For
+
+Different roles see different dashboards — everyone gets exactly what they need:
+
+### 💼 For Project Managers
+Your command center for team success:
+- Create and assign tasks with AI suggestions
+- Drag-and-drop Kanban boards
+- See delivery predictions with confidence scores (e.g., "90% sure by Feb 15")
+- Get resource recommendations ("Move Sarah to backend — she's 40% faster there")
+- Chat with your AI PM assistant using voice or text
+- Plan sprints automatically with AI
+
+### 👨‍💻 For Developers  
+Focus on code, not admin:
+- See only YOUR tasks in a clean view
+- GitHub issues and commits right in the dashboard
+- Ask project questions in your IDE (via MCP Server)
+- Get suggested branch names and commit messages
+- Track your velocity and contributions
+
+### 📊 For Executives
+High-level insights without the noise:
+- Delivery health across all projects
+- Risk indicators and team utilization
+- Strategic resource allocation
+- What-if scenario planning
+
+### 💰 For Finance & HR
+Keep budgets and teams healthy:
+- Cost tracking per project and team member
+- Burnout risk indicators
+- Resource utilization heatmaps
+- Budget vs actual analysis
+
+### 📈 For Sales Teams
+Complete CRM with AI intelligence:
+- Revenue forecasting with confidence intervals
+- Customer analytics and RFM segmentation
+- AI-generated charts from natural language ("Show Q1 revenue by product")
+- WhatsApp integration for customer outreach
+- Deal pipeline tracking
+
+### 🧪 For QA Testers
+*(Coming Soon — Placeholder Dashboard)*
+
+---
+
+## 🤖 How Our AI Actually Works
+
+### Smart Task Generation
+**What you do:** Describe a feature in plain English
+**What AI does:** Creates organized tasks, suggests who should do them, estimates timelines
+
+### Learning Over Time
+**What you do:** Accept or reject AI suggestions  
+**What AI does:** Remembers what works for YOUR team and stops suggesting things you don't like
+
+### Predicting the Future
+**What you do:** Ask "when will this be done?"  
+**What AI does:** Runs 10,000 simulations of possible futures and tells you probabilities (like weather forecasts)
+
+### Multi-Agent Teamwork
+**What you do:** Ask for a decision  
+**What AI does:** Three specialist agents (Developer, Manager, Optimizer) debate the options and vote on the best path
+
+### Natural Language to Action
+**What you do:** Say "create a task for authentication" or "show me this quarter's revenue"  
+**What AI does:** Understands intent and executes — creates tasks, generates charts, plans sprints
+
+---
+
+## 🎯 Why Our Predictions Work
+
+### The Problem with Traditional Planning
+Most project management tools show one date: *"Expected: March 1"*  
+Reality: You finish March 22 and everyone's upset.
+
+### Our Solution: Show Probabilities, Not Promises
+Instead of guessing one date, we run **10,000 simulations** of your project with different scenarios:
+- What if Sarah takes longer on that API?
+- What if the dependency gets delayed?
+- What if someone takes a vacation?
+
+**You get:** *"50% chance by Feb 28, 90% chance by March 7"*  
+**Just like:** Weather forecasts — helpful uncertainty instead of false confidence
+
+### Smart Resource Recommendations
+The AI learns which team members work best on which tasks and suggests:
+- "Move this to James — he's 35% faster at backend work"
+- "Delay this task — Sam is overloaded and at burnout risk"
+- "Split this into two tasks for better parallelization"
+
+Every time you accept or reject a suggestion, the AI gets smarter for YOUR specific team.
+
+---
+
+## 📊 Predictive Analysis & Business Intelligence — Under the Hood
+
+### How Monte Carlo Simulation Powers Delivery Predictions
+
+Traditional tools give you one date. We give you a **probability curve** built from real math:
+
 ```
-UI Components (Modals, Previews, Human Confirmation)
+Your Project Data (velocity, task sizes, team availability)
         ↓
-Server Actions (Auth, Zod Validation, Logging)
+Run 10,000 Simulated Project Timelines
         ↓
-Prompt Builder (Context-aware prompts per capability)
+Each simulation randomly varies: task durations, blocker chances, team capacity
         ↓
-Gemini Client (API calls, retry logic, JSON extraction)
+Sort all 10,000 outcomes → Get probability distribution
+        ↓
+Output: P50 (median), P70 (likely), P85 (safe), P90 (high confidence)
 ```
 
-**Principles:** Human-in-the-loop confirmation, Zod-validated outputs, context-aware prompts, 2x automatic retries, isolated service layer.
+**What we factor into each simulation:**
+- **Historical velocity** — How fast has this team actually moved in past sprints?
+- **Task estimation uncertainty** — Developer estimates are usually off by 20-30%. We model that.
+- **Dependency chains** — Task B can't start until Task A finishes. We simulate delays cascading.
+- **Team availability** — PTO, holidays, context-switching. All modeled.
+- **Burnout risk** — Overworked team members slow down. We account for that too.
 
-### Multi-Agent Collaboration System
-Three autonomous AI agent types coordinating project work:
+**Business value:**
+- Managers make commitments to clients with actual confidence levels
+- Executives see revenue-at-risk when deadlines slip
+- Finance teams budget based on realistic timelines, not wishful thinking
 
-| Agent | Role |
-|-------|------|
-| **Developer Agent** | Code-focused task execution and technical decisions |
-| **Manager Agent** | Planning, coordination, and priority management |
-| **Optimizer Agent** | Performance optimization and process improvement |
+### What-If Scenario Planning
+Before making a big decision, simulate it first:
+- *"What happens if we add 2 developers?"* → See cost vs. timeline tradeoff
+- *"What if we cut 30% of scope?"* → See the new delivery curve
+- *"What if we remove this blocker?"* → See how much time we save
 
-Features: inter-agent message bus, decision proposals & reviews, mood tracking (focused/stressed/idle/collaborative/blocked), configurable autonomy levels, orchestrated planning cycles.
-
----
-
-## 📊 Predictive Delivery Engine
-
-Monte Carlo-powered delivery intelligence system:
-
-- **Monte Carlo Simulations** — 10,000-iteration probabilistic delivery predictions (P50/P70/P85/P90 confidence levels)
-- **Dependency Analyzer** — Dependency graph traversal, critical path identification, delay cascade analysis, bottleneck detection
-- **What-If Scenarios** — Simulate adding developers, reducing scope, removing blockers; compare cost and schedule impact
-- **Commitment Tracker** — Track promises to customers vs. actual delivery with revenue-at-risk calculations
+Each scenario runs its own 10,000 simulations. You compare them side by side.
 
 ---
 
-## ⚖️ Resource Allocation Engine
+### How Thompson Sampling Powers Smart Recommendations
 
-Intelligent resource optimization using machine learning techniques:
+This is the AI that **gets smarter over time**. Here's how it works in plain English:
 
-- **Thompson Sampling** — Contextual bandit algorithm for optimal task assignment
-- **Historical Learning** — Learns from past allocation outcomes
-- **Skill-Task Matching** — Scores based on skill compatibility
-- **Burnout Modeling** — Exponential burnout risk calculation
-- **Multi-Objective Pareto Scoring** — Balances speed, quality, and team health
-- **Delivery Confidence** — Real-time confidence scores for sprint completion
+**The Problem:** You have 6 possible actions when a project hits trouble:
+1. **Reassign the task** to someone better suited
+2. **Delay the task** to a less busy sprint
+3. **Split the task** into smaller pieces
+4. **Add a reviewer** for quality assurance
+5. **Suggest external help** (contractor, another team)
+6. **Rebalance the workload** across the team
 
----
+Which one should the AI suggest? It depends on YOUR team's preferences and history.
 
-## 🔄 Visual Workflow Builder
+**The Solution — Learning by Doing:**
 
-Build complex automations through a drag-and-drop ReactFlow editor:
+```
+Step 1: Start with no assumptions (equal chance for all 6 actions)
+Step 2: Suggest an action based on current knowledge
+Step 3: Manager accepts or rejects the suggestion
+Step 4: AI updates its understanding:
+        ✅ Accepted → "This action works for this team" (boost confidence)
+        ❌ Rejected → "This team doesn't like this" (lower confidence)
+Step 5: Next suggestion is smarter. Repeat forever.
+```
 
-- **15+ Node Types** — Triggers, actions, logic, and AI nodes
-- **AI Workflow Generation** — Describe workflows in natural language
-- **Topological Sort Execution** — Smart dependency-based execution order
-- **Template Variables** — Dynamic data passing (`{{triggerData}}`, `{{previousOutput}}`)
+**Why Thompson Sampling specifically?**
+- **No tuning required** — It just works. Other algorithms need manual configuration.
+- **Handles uncertainty** — Early on, it explores different options. Once confident, it sticks with winners.
+- **Adapts to change** — Team dynamics shift? It adjusts automatically.
+- **Works with small data** — Only needs ~20-30 decisions to get good. Most ML needs thousands.
 
-### Supported Integrations
+**Context-Aware:** The AI doesn't just learn globally — it learns PER CONTEXT:
+- Small teams need different strategies than large teams
+- Early sprint recommendations differ from late sprint ones
+- Overloaded teams get different suggestions than underutilized teams
 
-| Service | Trigger | Action |
-|---------|---------|--------|
-| **Google Drive** | ✅ File changes | — |
-| **Google Calendar** | — | ✅ Create events |
-| **Gmail** | ✅ Read emails | ✅ Send / draft |
-| **Slack** | — | ✅ Post messages |
-| **Discord** | — | ✅ Webhook messages |
-| **Notion** | — | ✅ Create entries |
-| **Webhooks** | ✅ Receive | ✅ Send HTTP |
-
-### Node Categories
-- **Triggers:** Google Drive, Gmail Read, Schedule, Webhook, Generic
-- **Actions:** Slack, Discord, Notion, Gmail Send, Calendar, Email, HTTP
-- **Logic:** Condition (branching), AI Processing, Wait, Text Formatter, Data Filter, Code
-
----
-
-## 🎥 Real-Time Video Meetings
-
-Stream.io-powered video conferencing with live AI transcription:
-
-- **HD Video** — Stream Video SDK with full conferencing features
-- **Live Transcription** — Real-time OpenAI Whisper transcription with subtitle display
-- **Meeting Types** — Instant, scheduled, join via link/code, personal rooms
-- **Meeting Chat** — In-call messaging
-- **Text-to-Speech** — AI-generated voice responses
-- **Call History** — Upcoming, previous, and recorded meetings
+**Delayed Reward Learning:**
+Sometimes you don't know if a recommendation was good until weeks later (did the task succeed?). We handle this with two-phase learning:
+1. **Immediate feedback:** Manager accepts/rejects (fast signal)
+2. **Outcome tracking:** Did the task actually finish on time? (delayed signal, updates the model retroactively)
 
 ---
 
-## 🔗 GitHub Integration
+### Sales Forecasting & Revenue Intelligence
 
-Full GitHub App integration for seamless development workflow:
+For sales teams, we combine multiple prediction engines:
 
-- **GitHub App** — JWT-authenticated with installation tokens, dual-mode (App + OAuth)
-- **Webhook Processing** — Real-time event handling for push, issues, pull requests
-- **Developer View** — GitHub issues list with state filter, labels, assignees; commits grouped by date with SHA copy
-- **Repository Management** — Link repos to projects, browse installations
+**Revenue Forecasting:**
+- Prophet time-series model trained on your sales history
+- Predicts revenue, average order value, and order volume
+- Shows confidence intervals (not just one number)
+- Handles seasonality automatically (holiday spikes, summer dips)
+
+**Customer Analytics:**
+- **RFM Segmentation** — Groups customers by Recency, Frequency, and Monetary value
+- Identifies your best customers, at-risk customers, and re-engagement targets
+- Visual analytics: bar charts, radar charts, radial charts
+
+**AI-Generated Charts:**
+Ask in plain English → Get a chart:
+- *"Show me revenue by month for Q1"*
+- *"Compare top 10 customers by lifetime value"*
+- *"What's the sales trend by day of week?"*
+
+The AI generates the right chart type, colors, and labels automatically.
+
+**Business Impact:**
+- Sales teams forecast pipeline with mathematical confidence
+- Finance plans budgets based on predicted revenue curves
+- Executives see at-a-glance health metrics across business units
 
 ---
 
-## 🛠️ MCP Server (26 Tools)
+## 🔄 Workflow Automation (No Code Required)
 
-A standalone Model Context Protocol server enabling AI coding assistants to interact with project data directly from your IDE.
+### Build Automations Like LEGOs
+Drag and drop blocks to create powerful automations:
+- **When** a file changes in Google Drive → **Send** a Slack message
+- **When** someone emails you → **Create** a Notion task
+- **On schedule** every Monday → **Generate** a weekly report
 
-**Compatible with:** VS Code / GitHub Copilot, Claude Desktop, Claude Code CLI, Cursor
+### Supports Your Favorite Tools
+✅ Google Drive, Gmail, Calendar  
+✅ Slack, Discord, Notion  
+✅ Webhooks, scheduled triggers  
+✅ AI processing nodes  
 
-### Tool Categories
+### Or Just Describe It
+Too lazy to drag boxes? Tell AI: *"Send me a Slack message every time someone updates the shared folder"* — AI builds the workflow for you.
 
-| Category | Tools | Description |
-|----------|-------|-------------|
-| **Project Context** | 4 | `list_projects`, `get_project_context`, `get_coding_standards`, `get_team_members` |
-| **Task Management** | 8 | `get_my_tasks`, `get_task_details`, `find_task_by_key`, `update_task_status`, `update_task_description`, `search_tasks`, `create_task`, `get_all_tasks` |
-| **Sprint Management** | 3 | `get_sprints`, `get_active_sprint`, `get_backlog` |
-| **Workflow** | 2 | `get_allowed_transitions`, `get_workflow` |
-| **AI-Powered** | 4 | `generate_implementation_plan`, `ask_project_question`, `generate_test_cases`, `check_acceptance_criteria` |
-| **Productivity** | 5 | `get_my_stats`, `generate_standup`, `get_branch_name`, `get_commit_message`, `get_next_task` |
+---
 
-### MCP Setup
+## 🎥 Video Meetings with Live AI Transcription
+
+Hold meetings right inside the platform:
+- HD video with screen sharing
+- AI transcribes everything in real-time (like Zoom live captions)
+- Meeting chat built-in
+- Recordings and meeting history
+- Instant meetings or scheduled calls
+
+No more scrambling to take notes — just review the transcript later.
+
+---
+
+## 💻 MCP Server: Your IDE Knows Your Project
+
+### What is MCP?
+Model Context Protocol — it lets your AI coding assistant (GitHub Copilot, Claude, Cursor) talk directly to Commando AI.
+
+### What You Can Do
+Ask questions in your code editor:
+- *"What tasks are blocking me?"*
+- *"Generate a standup update"*
+- *"What's the ideal branch name for this feature?"*
+- *"Show me the next high-priority task"*
+- *"Get implementation plan for authentication"*
+
+26 tools available — from task management to AI-powered planning.
+
+### Setup is Simple
 ```bash
 cd mcp-server
-npm install
-npm run build
+npm install && npm run build
 ```
-Configure in your IDE's MCP settings to point to the built server.
+Then configure your IDE to point to the built server. Done.
 
 ---
 
-## 🏠 Dashboard & Widgets
+## 🏠 Unified Dashboard
 
-The main dashboard provides a unified view with 14 widget components:
-
-| Widget | Description |
-|--------|-------------|
-| **Calendar Widget** | Google Calendar integration with weekly view |
-| **Calendar AI Modal** | AI-powered calendar insights |
-| **Drive Widget** | Google Drive file browser |
-| **Drive AI Modal** | AI-powered Drive analysis |
-| **Gmail Widget** | Gmail inbox integration |
-| **Gmail AI Modal** | AI-powered email insights |
-| **Notion Widget** | Notion workspace integration |
-| **Workflows Widget** | Workflow automation status |
-| **Activity Feed** | Recent activity stream |
-| **Quick Actions** | One-click common actions |
-| **Stats Bar** | Key metrics overview |
-| **File Types Chart** | File distribution visualization |
+Your home base connects everything:
+- **Calendar** — Google Calendar integration with AI insights
+- **Email** — Gmail inbox with AI-powered email analysis
+- **Drive** — Google Drive file browser
+- **Workflows** — See automation status at a glance
+- **Activity Feed** — Recent project updates
+- **Quick Actions** — One-click common tasks
+- **Metrics** — Key stats overview
 
 ---
 
-## 🔐 Authentication & Access Control
+## 🔐 Security & Access
 
-### Clerk Authentication
-- OAuth sign-in/sign-up with Google and other providers
-- Route protection via `clerkMiddleware`
-- User sync via Clerk webhooks
+### Multi-Layer Protection
+- Industry-standard OAuth authentication (Clerk)
+- Data encrypted at rest and in transit
+- Role-based access control (Owner, Admin, Member, Viewer)
+- Department-specific permissions
+- Super user system for admins
 
-### Role System
-- **Project Roles:** Owner, Admin, Member, Viewer
-- **Department Roles:** Developer, QA Tester, Finance, Sales, Executive, Project Manager
-- **Super User System:** Designated admins can override role assignment when accessing any project, selecting from all department roles via a dropdown
-
-### Billing
-- Stripe integration for premium features
-- Credit-based usage system (Free / Pro / Unlimited tiers)
-
----
-
-## 🏗️ Architecture
-
-### Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **Framework** | Next.js 14 (App Router) |
-| **Language** | TypeScript |
-| **Database** | PostgreSQL + Prisma ORM (33 models) |
-| **Auth** | Clerk |
-| **UI** | Tailwind CSS + shadcn/ui (Radix) |
-| **State** | Zustand + React Context (7 providers) |
-| **Video** | Stream.io SDK |
-| **AI** | Google Gemini 2.5-flash, OpenAI Whisper |
-| **Workflow** | ReactFlow / XYFlow |
-| **Charts** | Recharts |
-| **DnD** | @dnd-kit |
-| **Payments** | Stripe |
-| **Background Jobs** | Inngest |
-| **GitHub** | Octokit + GitHub App |
-
-### Project Structure
-```
-src/
-├── app/
-│   ├── (auth)/                    # Sign-in / sign-up
-│   ├── (main)/(pages)/            # Protected pages
-│   │   ├── dashboard/             # Home dashboard + widgets
-│   │   │   └── (meeting)/         # Video conferencing
-│   │   ├── projects/              # Project listing
-│   │   │   └── [projectId]/       # Role-based project views
-│   │   │       ├── project-manager/  # PM dashboard (10+ sub-pages)
-│   │   │       ├── developer/        # Dev tasks + GitHub
-│   │   │       ├── executives/       # Executive insights
-│   │   │       ├── finance/          # Finance & HR
-│   │   │       ├── sales/            # Full CRM (8 sub-pages)
-│   │   │       └── qa-tester/        # QA (coming soon)
-│   │   ├── workflows/             # Visual workflow editor
-│   │   ├── connections/           # Service integrations
-│   │   ├── billing/               # Subscription management
-│   │   └── settings/              # User settings
-│   └── api/                       # 22 API route groups
-├── components/
-│   ├── ai/                        # AI modals & buttons
-│   ├── dashboard/                 # 14 dashboard widgets
-│   ├── ui/                        # shadcn/ui components
-│   └── ...                        # Meeting, sidebar, forms
-├── lib/
-│   ├── ai/                        # Gemini client, prompts, actions, types
-│   ├── agents/                    # Multi-agent system (3 agent types)
-│   ├── delivery-engine/           # Monte Carlo, dependencies, what-if
-│   ├── resource-allocation/       # Thompson Sampling engine
-│   ├── charts/                    # Chart config schemas
-│   └── ...                        # DB, types, utils, workflow executor
-├── providers/                     # 7 context providers
-└── hooks/                         # Custom React hooks
-
-mcp-server/                        # Standalone MCP server (26 tools)
-├── src/tools/                     # Tool implementations
-├── prisma/                        # Shared schema
-└── package.json
-```
-
-### Database Schema (33 Prisma Models)
-**Core:** User, Project, ProjectSetup, ProjectMember, Sprint, Issue
-**Workflow:** Workflows, ProjectWorkflow, WorkflowStatus, WorkflowTransition
-**Integrations:** LocalGoogleCredential, DiscordWebhook, Slack, Notion, GitHub, Connections
-**AI Agents:** AgentProfile, AgentMessage, AgentDecision
-**Delivery:** DeliveryPrediction, DeliveryCommitment, DeliveryScenario, DependencyChain, VelocitySnapshot
-**Resources:** ResourceAllocation, ResourceConfig, ResourceAuditLog, PlanningCycleSnapshot, Recommendation, RecommendationOutcome
-**Analytics:** DashboardAnalytics, ForecastAnalytics
+### Your Data Stays Yours
+- All project data in YOUR PostgreSQL database
+- AI models don't train on your data
+- MCP server runs locally (code never leaves your machine)
+- Self-hosted option available for enterprises
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Node.js 18+
-- PostgreSQL database
-- Required API keys (see Environment Variables)
+### What You Need
+- Node.js 18 or higher
+- A PostgreSQL database
+- API keys (we'll tell you which ones)
 
-### Installation
+### Installation (5 Minutes)
 
+**1. Clone the project**
 ```bash
-# 1. Clone
 git clone https://github.com/VirusHacks/CommandoAI
 cd CommandoAI
+```
 
-# 2. Install dependencies
+**2. Install dependencies**
+```bash
 npm install
+```
 
-# 3. Configure environment
-cp .env.example .env    # Fill in API keys (see below)
+**3. Set up environment**
+```bash
+cp .env.example .env
+# Open .env and add your API keys
+```
 
-# 4. Set up database
+**4. Set up database**
+```bash
 npx prisma db push
 npx prisma generate
+```
 
-# 5. (Optional) Set up MCP server
-cd mcp-server && npm install && npm run build && cd ..
-
-# 6. Start development server
+**5. Start the app**
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
-
-### Environment Variables
-
-```env
-# Database
-DATABASE_URL="postgresql://..."
-
-# Clerk Auth
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
-CLERK_SECRET_KEY=sk_...
-
-# Stream.io (Video)
-NEXT_PUBLIC_STREAM_API_KEY=...
-STREAM_SECRET_KEY=...
-
-# OpenAI (Transcription)
-OPENAI_API_KEY=sk-...
-
-# Google Gemini (AI)
-GEMINI_API_KEY=...
-
-# Google OAuth
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-
-# GitHub App
-GITHUB_APP_ID=...
-GITHUB_PRIVATE_KEY=...
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
-
-# Slack OAuth
-SLACK_CLIENT_ID=...
-SLACK_CLIENT_SECRET=...
-
-# Discord
-DISCORD_CLIENT_ID=...
-DISCORD_CLIENT_SECRET=...
-
-# Notion
-NOTION_CLIENT_ID=...
-NOTION_CLIENT_SECRET=...
-
-# Stripe
-STRIPE_SECRET_KEY=...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=...
-```
+Open [http://localhost:3000](http://localhost:3000) and you're ready!
 
 ---
 
-## 📝 Available Scripts
+## 🔑 Required API Keys
+
+You'll need accounts (most have free tiers):
+
+| Service | What It's For | Get It From |
+|---------|---------------|-------------|
+| **Clerk** | User authentication | [clerk.com](https://clerk.com) |
+| **Google Gemini** | AI intelligence | [ai.google.dev](https://ai.google.dev) |
+| **Stream.io** | Video meetings | [getstream.io](https://getstream.io) |
+| **OpenAI** | Transcription | [platform.openai.com](https://platform.openai.com) |
+
+Optional integrations (add later if needed):
+- Google OAuth (Drive, Gmail, Calendar)
+- Slack, Discord, Notion (for workflow automations)
+- GitHub App (for developer dashboard)
+- Stripe (for billing features)
+
+---
+
+## 🛠️ Tech Stack (For the Technical Folks)
+
+**Built with modern, battle-tested tools:**
+
+- **Frontend:** Next.js 14, React 18, TypeScript
+- **Database:** PostgreSQL + Prisma ORM
+- **AI:** Google Gemini 2.5 Flash, OpenAI Whisper
+- **Auth:** Clerk with OAuth
+- **UI:** Tailwind CSS, shadcn/ui (Radix primitives)
+- **Video:** Stream.io SDK
+- **Workflow:** ReactFlow visual editor
+- **Charts:** Recharts
+
+---
+
+## 📝 Useful Commands
+
+Once you're set up:
 
 ```bash
-npm run dev          # Start development server
-npm run dev:https    # Start with HTTPS (experimental)
-npm run build        # Production build (runs prisma generate)
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npx prisma studio    # Open database GUI
-npx prisma db push   # Sync schema to database
+npm run dev          # Start development (localhost:3000)
+npm run build        # Build for production
+npm run start        # Run production build
+npx prisma studio    # Open database GUI (super useful!)
+npx prisma db push   # Update database schema
 ```
 
 ---
 
-## 🤝 Contributing
+## 📖 Learn More
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Want to dive deeper?
+
+- **QA_PREPARATION.md** — Deep technical explanations of algorithms
+- **QUICK_REFERENCE_CARD.md** — Cheat sheet for core features  
+- **Demo Recordings** — Check `/transcriptions` for meeting examples
+
+---
+
+## 💬 Questions or Issues?
+
+- Open an issue on GitHub
+- Check existing documentation in the repo
+- Review the code — it's well-commented!
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT License — free to use, modify, and distribute.
 
 ---
 
-## 🙏 Acknowledgments
+## 🙏 Built With
 
-- [Next.js](https://nextjs.org/) — React Framework
-- [Clerk](https://clerk.com/) — Authentication
-- [Stream.io](https://getstream.io/) — Video SDK
-- [ReactFlow](https://reactflow.dev/) — Visual Workflow Editor
-- [shadcn/ui](https://ui.shadcn.com/) — UI Components
-- [OpenAI](https://openai.com/) — Whisper Transcription
-- [Google Gemini](https://deepmind.google/technologies/gemini/) — AI Engine
-- [Prisma](https://www.prisma.io/) — Database ORM
-- [Recharts](https://recharts.org/) — Charts & Visualization
-- [Octokit](https://github.com/octokit) — GitHub API
-- [Inngest](https://www.inngest.com/) — Background Jobs
-- [DnD Kit](https://dndkit.com/) — Drag and Drop
+Thanks to these amazing tools that made Commando AI possible:
+- [Next.js](https://nextjs.org/) — React framework
+- [Clerk](https://clerk.com/) — Authentication  
+- [Google Gemini](https://ai.google.dev/) — AI engine
+- [Stream.io](https://getstream.io/) — Video infrastructure
+- [Prisma](https://www.prisma.io/) — Database magic
+- [shadcn/ui](https://ui.shadcn.com/) — Beautiful components
+
+---
+
+**Built with ❤️ for teams that want to ship faster without burning out.**
