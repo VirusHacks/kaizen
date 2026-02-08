@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
-import { getInstallationOctokit } from '@/lib/github-app'
+import { getAuthenticatedOctokit } from '@/lib/github-helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,33 +8,29 @@ type Params = { params: Promise<{ owner: string; repo: string }> }
 /**
  * GET /api/github/repos/[owner]/[repo]/pulls
  * List pull requests for a repository.
+ * Supports ?state=open|closed|all&page=1&per_page=30&sort=updated&direction=desc
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
     const { owner, repo } = await params
     const { searchParams } = new URL(req.url)
     const state = (searchParams.get('state') || 'open') as 'open' | 'closed' | 'all'
+    const sort = (searchParams.get('sort') || 'updated') as 'created' | 'updated' | 'popularity' | 'long-running'
+    const direction = (searchParams.get('direction') || 'desc') as 'asc' | 'desc'
     const page = parseInt(searchParams.get('page') || '1')
     const perPage = parseInt(searchParams.get('per_page') || '30')
 
-    const github = await db.gitHub.findFirst({ where: { userId } })
-
-    if (!github?.installationId) {
-      return NextResponse.json({ error: 'GitHub App not installed' }, { status: 400 })
-    }
-
-    const octokit = getInstallationOctokit(github.installationId)
-    const { data } = await octokit.pulls.list({
+    const { data } = await result.octokit.pulls.list({
       owner,
       repo,
       state,
-      sort: 'updated',
-      direction: 'desc',
+      sort,
+      direction,
       per_page: perPage,
       page,
     })
@@ -54,9 +48,9 @@ export async function GET(req: NextRequest, { params }: Params) {
  */
 export async function POST(req: NextRequest, { params }: Params) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
     const { owner, repo } = await params
@@ -70,14 +64,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       )
     }
 
-    const github = await db.gitHub.findFirst({ where: { userId } })
-
-    if (!github?.installationId) {
-      return NextResponse.json({ error: 'GitHub App not installed' }, { status: 400 })
-    }
-
-    const octokit = getInstallationOctokit(github.installationId)
-    const { data } = await octokit.pulls.create({
+    const { data } = await result.octokit.pulls.create({
       owner,
       repo,
       title,
@@ -91,5 +78,41 @@ export async function POST(req: NextRequest, { params }: Params) {
   } catch (error) {
     console.error('[GITHUB_PULLS_POST]', error)
     return NextResponse.json({ error: 'Failed to create pull request' }, { status: 500 })
+  }
+}
+
+/**
+ * PATCH /api/github/repos/[owner]/[repo]/pulls
+ * Update/merge a pull request (pass pull_number in body).
+ */
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
+    }
+
+    const { owner, repo } = await params
+    const body = await req.json()
+    const { pull_number, title, description, state, base } = body
+
+    if (!pull_number) {
+      return NextResponse.json({ error: 'pull_number is required' }, { status: 400 })
+    }
+
+    const { data } = await result.octokit.pulls.update({
+      owner,
+      repo,
+      pull_number,
+      ...(title !== undefined ? { title } : {}),
+      ...(description !== undefined ? { body: description } : {}),
+      ...(state !== undefined ? { state } : {}),
+      ...(base !== undefined ? { base } : {}),
+    })
+
+    return NextResponse.json({ pullRequest: data })
+  } catch (error) {
+    console.error('[GITHUB_PULLS_PATCH]', error)
+    return NextResponse.json({ error: 'Failed to update pull request' }, { status: 500 })
   }
 }

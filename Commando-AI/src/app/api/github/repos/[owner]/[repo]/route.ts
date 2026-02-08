@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
-import { getInstallationOctokit } from '@/lib/github-app'
+import { getAuthenticatedOctokit } from '@/lib/github-helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,24 +11,41 @@ type Params = { params: Promise<{ owner: string; repo: string }> }
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
     const { owner, repo } = await params
-    const github = await db.gitHub.findFirst({ where: { userId } })
-
-    if (!github?.installationId) {
-      return NextResponse.json({ error: 'GitHub App not installed' }, { status: 400 })
-    }
-
-    const octokit = getInstallationOctokit(github.installationId)
-    const { data } = await octokit.repos.get({ owner, repo })
+    const { data } = await result.octokit.repos.get({ owner, repo })
 
     return NextResponse.json({ repository: data })
   } catch (error) {
     console.error('[GITHUB_REPO_GET]', error)
     return NextResponse.json({ error: 'Failed to fetch repository' }, { status: 500 })
+  }
+}
+
+/**
+ * DELETE /api/github/repos/[owner]/[repo]
+ * Delete a repository (use with caution!).
+ */
+export async function DELETE(req: NextRequest, { params }: Params) {
+  try {
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
+    }
+
+    const { owner, repo } = await params
+    await result.octokit.repos.delete({ owner, repo })
+
+    return NextResponse.json({ success: true, message: `Repository ${owner}/${repo} deleted` })
+  } catch (error: any) {
+    console.error('[GITHUB_REPO_DELETE]', error)
+    if (error?.status === 403) {
+      return NextResponse.json({ error: 'Insufficient permissions to delete this repository' }, { status: 403 })
+    }
+    return NextResponse.json({ error: 'Failed to delete repository' }, { status: 500 })
   }
 }

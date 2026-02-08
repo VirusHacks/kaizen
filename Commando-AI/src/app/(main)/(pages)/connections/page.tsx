@@ -38,6 +38,8 @@ const Connections = async (props: Props) => {
     github_installation_id,
     github_app_slug,
     github_setup_action,
+    github_refresh_token,
+    github_token_expires_in,
   } = props.searchParams ?? {}
 
   const user = await currentUser()
@@ -93,7 +95,9 @@ const Connections = async (props: Props) => {
           github_username,
           user.id,
           github_installation_id ? parseInt(github_installation_id) : undefined,
-          github_app_slug
+          github_app_slug,
+          github_refresh_token,
+          github_token_expires_in ? parseInt(github_token_expires_in) : undefined
         )
       }
     } catch (error) {
@@ -103,10 +107,28 @@ const Connections = async (props: Props) => {
     try {
       const user_info = await getUserData(user.id)
 
-      // Get user info with all connections
+      // Get user info with all connections - verify the actual service record exists
       if (user_info?.connections) {
-        user_info.connections.forEach((connection) => {
-          connections[connection.type] = true
+        user_info.connections.forEach((connection: any) => {
+          let isActuallyConnected = false
+          switch (connection.type) {
+            case 'GitHub':
+              isActuallyConnected = !!connection.GitHub
+              break
+            case 'Discord':
+              isActuallyConnected = !!connection.DiscordWebhook
+              break
+            case 'Slack':
+              isActuallyConnected = !!connection.Slack
+              break
+            case 'Notion':
+              isActuallyConnected = !!connection.Notion
+              break
+            default:
+              isActuallyConnected = true
+              break
+          }
+          connections[connection.type] = isActuallyConnected
         })
       }
     } catch (error) {

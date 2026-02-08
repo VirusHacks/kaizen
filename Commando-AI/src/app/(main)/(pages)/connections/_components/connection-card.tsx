@@ -1,7 +1,7 @@
 'use client'
 
 import { ConnectionTypes } from '@/lib/types'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Card,
   CardDescription,
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Loader2, Unplug } from 'lucide-react'
+import { Loader2, Unplug, AlertTriangle, CheckCircle2, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type Props = {
@@ -32,7 +32,25 @@ const ConnectionCard = ({
   connected,
 }: Props) => {
   const [isDisconnecting, setIsDisconnecting] = useState(false)
+  const [githubPermissions, setGithubPermissions] = useState<{
+    ok: boolean
+    fix?: string
+    permissions?: Record<string, { ok: boolean; detail?: string }>
+  } | null>(null)
+  const [checkingPermissions, setCheckingPermissions] = useState(false)
   const router = useRouter()
+
+  // Check GitHub permissions when connected
+  useEffect(() => {
+    if (title === 'GitHub' && connected[type]) {
+      setCheckingPermissions(true)
+      fetch('/api/github/verify-permissions')
+        .then((r) => r.json())
+        .then((data) => setGithubPermissions(data))
+        .catch(() => setGithubPermissions(null))
+        .finally(() => setCheckingPermissions(false))
+    }
+  }, [title, type, connected])
 
   const handleDisconnect = async () => {
     if (!confirm(`Are you sure you want to disconnect ${title}?`)) {
@@ -75,14 +93,18 @@ const ConnectionCard = ({
       case 'Gmail':
         return '/api/auth/google'
       case 'GitHub':
-        // GitHub App OAuth flow
-        const clientId = process.env.NEXT_PUBLIC_GITHUB_APP_CLIENT_ID || ''
+        // GitHub App OAuth flow — always request scopes explicitly
+        const clientId = process.env.NEXT_PUBLIC_GITHUB_APP_CLIENT_ID || process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || ''
         const redirectUri = encodeURIComponent(
           process.env.NEXT_PUBLIC_URL
             ? `${process.env.NEXT_PUBLIC_URL}/api/auth/callback/github`
             : 'https://localhost:3000/api/auth/callback/github'
         )
-        return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}`
+        if (!clientId) {
+          console.error('No GitHub client ID configured. Set NEXT_PUBLIC_GITHUB_APP_CLIENT_ID or NEXT_PUBLIC_GITHUB_CLIENT_ID')
+          return '#'
+        }
+        return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=repo,user,read:org`
       default:
         return '#'
     }
@@ -111,6 +133,38 @@ const ConnectionCard = ({
             <div className="rounded-lg border-2 border-green-500 bg-green-500/10 px-3 py-2 text-sm font-bold text-green-500">
               Connected
             </div>
+            {/* GitHub permission status */}
+            {title === 'GitHub' && checkingPermissions && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Checking permissions...
+              </div>
+            )}
+            {title === 'GitHub' && githubPermissions && !githubPermissions.ok && (
+              <div className="flex max-w-[280px] flex-col items-center gap-1 rounded border border-yellow-500/50 bg-yellow-500/10 p-2 text-center">
+                <div className="flex items-center gap-1 text-xs font-semibold text-yellow-500">
+                  <AlertTriangle className="h-3 w-3" />
+                  Limited Permissions
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Your GitHub App needs additional permissions to create repos, manage issues, etc.
+                </p>
+                <a
+                  href="https://github.com/settings/apps/kaizen-commando-ai/permissions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[10px] text-blue-400 hover:underline"
+                >
+                  Configure App Permissions <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              </div>
+            )}
+            {title === 'GitHub' && githubPermissions?.ok && (
+              <div className="flex items-center gap-1 text-xs text-green-500">
+                <CheckCircle2 className="h-3 w-3" />
+                Full access
+              </div>
+            )}
             <Button
               variant="ghost"
               size="sm"

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
-import { getInstallationOctokit } from '@/lib/github-app'
+import { getAuthenticatedOctokit } from '@/lib/github-helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,20 +11,13 @@ type Params = { params: Promise<{ owner: string; repo: string }> }
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
     const { owner, repo } = await params
-    const github = await db.gitHub.findFirst({ where: { userId } })
-
-    if (!github?.installationId) {
-      return NextResponse.json({ error: 'GitHub App not installed' }, { status: 400 })
-    }
-
-    const octokit = getInstallationOctokit(github.installationId)
-    const { data } = await octokit.repos.listBranches({
+    const { data } = await result.octokit.repos.listBranches({
       owner,
       repo,
       per_page: 100,
@@ -36,5 +27,50 @@ export async function GET(req: NextRequest, { params }: Params) {
   } catch (error) {
     console.error('[GITHUB_BRANCHES_GET]', error)
     return NextResponse.json({ error: 'Failed to fetch branches' }, { status: 500 })
+  }
+}
+
+/**
+ * POST /api/github/repos/[owner]/[repo]/branches
+ * Create a new branch from an existing one.
+ * Body: { branchName: string, fromBranch?: string (default: 'main') }
+ */
+export async function POST(req: NextRequest, { params }: Params) {
+  try {
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
+    }
+
+    const { owner, repo } = await params
+    const body = await req.json()
+    const { branchName, fromBranch = 'main' } = body
+
+    if (!branchName) {
+      return NextResponse.json({ error: 'branchName is required' }, { status: 400 })
+    }
+
+    // Get the SHA of the source branch
+    const { data: ref } = await result.octokit.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${fromBranch}`,
+    })
+
+    // Create the new branch
+    const { data } = await result.octokit.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${branchName}`,
+      sha: ref.object.sha,
+    })
+
+    return NextResponse.json({ branch: data }, { status: 201 })
+  } catch (error: any) {
+    console.error('[GITHUB_BRANCHES_POST]', error)
+    if (error?.status === 422) {
+      return NextResponse.json({ error: 'Branch already exists' }, { status: 422 })
+    }
+    return NextResponse.json({ error: 'Failed to create branch' }, { status: 500 })
   }
 }

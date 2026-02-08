@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
-import { getInstallationOctokit, getUserInstallations, getInstallationUrl } from '@/lib/github-app'
+import { getInstallationOctokit, getUserInstallations, getInstallationUrl, isGitHubAppConfigured } from '@/lib/github-app'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,17 +24,22 @@ export async function GET(req: NextRequest) {
     })
 
     if (!github) {
+      let installUrl: string | null = null
+      try {
+        installUrl = isGitHubAppConfigured() ? getInstallationUrl() : null
+      } catch { /* GITHUB_APP_SLUG not set */ }
+
       return NextResponse.json({
         connected: false,
         installed: false,
-        installUrl: getInstallationUrl(),
+        installUrl,
       })
     }
 
     // If we have an installation ID, fetch repos
-    if (github.installationId) {
+    if (github.installationId && isGitHubAppConfigured()) {
       try {
-        const octokit = getInstallationOctokit(github.installationId)
+        const octokit = await getInstallationOctokit(github.installationId)
         const { data } = await octokit.apps.listReposAccessibleToInstallation({
           per_page: 100,
         })
@@ -83,29 +88,31 @@ export async function GET(req: NextRequest) {
           },
         })
 
-        const octokit = getInstallationOctokit(installations[0].id)
-        const { data } = await octokit.apps.listReposAccessibleToInstallation({
-          per_page: 100,
-        })
+        if (isGitHubAppConfigured()) {
+          const octokit = await getInstallationOctokit(installations[0].id)
+          const { data } = await octokit.apps.listReposAccessibleToInstallation({
+            per_page: 100,
+          })
 
-        return NextResponse.json({
-          connected: true,
-          installed: true,
-          installationId: installations[0].id,
-          username: github.username,
-          repositories: data.repositories.map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            fullName: r.full_name,
-            private: r.private,
-            htmlUrl: r.html_url,
-            description: r.description,
-            defaultBranch: r.default_branch,
-            language: r.language,
-            updatedAt: r.updated_at,
-          })),
-          totalCount: data.total_count,
-        })
+          return NextResponse.json({
+            connected: true,
+            installed: true,
+            installationId: installations[0].id,
+            username: github.username,
+            repositories: data.repositories.map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              fullName: r.full_name,
+              private: r.private,
+              htmlUrl: r.html_url,
+              description: r.description,
+              defaultBranch: r.default_branch,
+              language: r.language,
+              updatedAt: r.updated_at,
+            })),
+            totalCount: data.total_count,
+          })
+        }
       }
     } catch (err) {
       console.warn('[GITHUB_INSTALLATION] Could not check installations:', err)
@@ -115,7 +122,7 @@ export async function GET(req: NextRequest) {
       connected: true,
       installed: false,
       username: github.username,
-      installUrl: getInstallationUrl(),
+      installUrl: isGitHubAppConfigured() ? getInstallationUrl() : null,
     })
   } catch (error) {
     console.error('[GITHUB_INSTALLATION_GET]', error)

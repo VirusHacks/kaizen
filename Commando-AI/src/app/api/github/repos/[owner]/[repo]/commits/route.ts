@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { db } from '@/lib/db'
-import { getInstallationOctokit } from '@/lib/github-app'
+import { getAuthenticatedOctokit } from '@/lib/github-helpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,31 +8,33 @@ type Params = { params: Promise<{ owner: string; repo: string }> }
 /**
  * GET /api/github/repos/[owner]/[repo]/commits
  * List commits for a repository.
+ * Supports ?sha=branch&page=1&per_page=30&author=username&path=filepath&since=ISO&until=ISO
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const result = await getAuthenticatedOctokit()
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status })
     }
 
     const { owner, repo } = await params
     const { searchParams } = new URL(req.url)
     const sha = searchParams.get('sha') || undefined
+    const path = searchParams.get('path') || undefined
+    const author = searchParams.get('author') || undefined
+    const since = searchParams.get('since') || undefined
+    const until = searchParams.get('until') || undefined
     const page = parseInt(searchParams.get('page') || '1')
     const perPage = parseInt(searchParams.get('per_page') || '30')
 
-    const github = await db.gitHub.findFirst({ where: { userId } })
-
-    if (!github?.installationId) {
-      return NextResponse.json({ error: 'GitHub App not installed' }, { status: 400 })
-    }
-
-    const octokit = getInstallationOctokit(github.installationId)
-    const { data } = await octokit.repos.listCommits({
+    const { data } = await result.octokit.repos.listCommits({
       owner,
       repo,
       sha,
+      path,
+      author,
+      since,
+      until,
       per_page: perPage,
       page,
     })
